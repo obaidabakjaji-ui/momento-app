@@ -1,1 +1,29 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"momento-app-64950","appId":"1:149110523075:android:716dc3157c83ecccad0e76","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"momento-app-64950","configurations":{"android":"1:149110523075:android:716dc3157c83ecccad0e76","ios":"1:149110523075:ios:b8ca9adb330120a2ad0e76"}}}}}}
+{
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "storage": {
+    "rules": "storage.rules"
+  },
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "momento-app-64950",
+          "appId": "1:149110523075:android:716dc3157c83ecccad0e76",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "momento-app-64950",
+          "configurations": {
+            "android": "1:149110523075:android:716dc3157c83ecccad0e76",
+            "ios": "1:149110523075:ios:b8ca9adb330120a2ad0e76"
+          }
+        }
+      }
+    }
+  }
+}
