@@ -1,6 +1,15 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../services/auth_service.dart';
+import '../../legal_urls.dart';
 import '../../theme.dart';
+
+class _LegalTapRecognizer extends TapGestureRecognizer {
+  _LegalTapRecognizer(VoidCallback onTapHandler) {
+    onTap = onTapHandler;
+  }
+}
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -46,6 +55,103 @@ class _AuthScreenState extends State<AuthScreen> {
       if (mounted) setState(() => _loading = false);
     }
   }
+
+  Future<void> _promptPasswordReset() async {
+    final controller =
+        TextEditingController(text: _emailController.text.trim());
+    final email = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Reset password'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Enter your email and we\'ll send you a link to reset your password.',
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: controller,
+              autofocus: true,
+              keyboardType: TextInputType.emailAddress,
+              decoration: const InputDecoration(
+                hintText: 'you@example.com',
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, controller.text.trim()),
+            child: const Text('Send'),
+          ),
+        ],
+      ),
+    );
+    if (email == null || email.isEmpty || !email.contains('@')) return;
+    try {
+      await _auth.sendPasswordResetEmail(email);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Reset link sent to $email')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed: $e')),
+        );
+      }
+    }
+  }
+
+  Widget _buildLegalFooter(BuildContext context) {
+    final base = TextStyle(
+      fontSize: 11,
+      color: MomentoTheme.deepPlum.withValues(alpha: 0.6),
+    );
+    final link = base.copyWith(
+      color: MomentoTheme.coral,
+      decoration: TextDecoration.underline,
+    );
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: RichText(
+        textAlign: TextAlign.center,
+        text: TextSpan(
+          style: base,
+          children: [
+            TextSpan(
+              text: _isSignUp
+                  ? 'By creating an account you agree to our '
+                  : 'By signing in you agree to our ',
+            ),
+            TextSpan(
+              text: 'Terms',
+              style: link,
+              recognizer: _tap(kTermsOfServiceUrl),
+            ),
+            const TextSpan(text: ' and '),
+            TextSpan(
+              text: 'Privacy Policy',
+              style: link,
+              recognizer: _tap(kPrivacyPolicyUrl),
+            ),
+            const TextSpan(text: '.'),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Wraps url_launcher tap handling as a TapGestureRecognizer.
+  _LegalTapRecognizer _tap(String url) =>
+      _LegalTapRecognizer(() => launchUrl(Uri.parse(url)));
 
   Future<void> _handleGoogleSignIn() async {
     setState(() => _loading = true);
@@ -173,6 +279,15 @@ class _AuthScreenState extends State<AuthScreen> {
                           )
                         : Text(_isSignUp ? 'Create Account' : 'Sign In'),
                   ),
+                  if (!_isSignUp) ...[
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: _loading ? null : _promptPasswordReset,
+                        child: const Text('Forgot password?'),
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 12),
 
                   // Google sign in
@@ -192,6 +307,8 @@ class _AuthScreenState extends State<AuthScreen> {
                           : "Don't have an account? Sign up",
                     ),
                   ),
+                  const SizedBox(height: 8),
+                  _buildLegalFooter(context),
                 ],
               ),
             ),

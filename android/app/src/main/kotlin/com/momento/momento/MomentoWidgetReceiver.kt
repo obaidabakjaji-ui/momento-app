@@ -52,11 +52,14 @@ class MomentoWidgetReceiver : HomeWidgetProvider() {
         appWidgetIds: IntArray,
         widgetData: SharedPreferences
     ) {
-        val pathsJson = widgetData.getString("momento_image_paths", "[]") ?: "[]"
-        val namesJson = widgetData.getString("momento_senders", "[]") ?: "[]"
-
-        val paths = try { JSONArray(pathsJson) } catch (_: Exception) { JSONArray() }
-        val names = try { JSONArray(namesJson) } catch (_: Exception) { JSONArray() }
+        val paths = parseArray(widgetData.getString("momento_image_paths", "[]"))
+        val names = parseArray(widgetData.getString("momento_senders", "[]"))
+        val rooms = parseArray(widgetData.getString("momento_rooms", "[]"))
+        val favs = parseArray(widgetData.getString("momento_favorites", "[]"))
+        val videos = parseArray(widgetData.getString("momento_is_videos", "[]"))
+        val captions = parseArray(widgetData.getString("momento_captions", "[]"))
+        val likes = parseArray(widgetData.getString("momento_likes", "[]"))
+        val createdAts = parseArray(widgetData.getString("momento_created_ats", "[]"))
         val count = paths.length()
 
         appWidgetIds.forEach { widgetId ->
@@ -68,29 +71,82 @@ class MomentoWidgetReceiver : HomeWidgetProvider() {
                 val prefs = context.getSharedPreferences("home_widget_prefs", Context.MODE_PRIVATE)
                 val currentIndex = prefs.getInt("$PREF_CURRENT_INDEX$widgetId", 0) % count
                 val imagePath = paths.getString(currentIndex)
-                val senderName = if (currentIndex < names.length()) names.getString(currentIndex) else ""
+                val senderName = names.optStringSafe(currentIndex)
+                val roomName = rooms.optStringSafe(currentIndex)
+                val isFavorite = favs.optBoolean(currentIndex, false)
+                val isVideo = videos.optBoolean(currentIndex, false)
+                val caption = captions.optStringSafe(currentIndex)
+                val likeCount = likes.optInt(currentIndex, 0)
+                val createdAtMs = createdAts.optLongAt(currentIndex)
 
                 val file = File(imagePath)
-                if (file.exists()) {
-                    val bitmap = BitmapFactory.decodeFile(imagePath)
-                    views.setImageViewBitmap(R.id.widget_image, bitmap)
-                    views.setViewVisibility(R.id.widget_image, View.VISIBLE)
-                    views.setViewVisibility(R.id.widget_empty, View.GONE)
-                    views.setTextViewText(R.id.widget_sender, senderName)
-                    views.setViewVisibility(R.id.widget_sender, View.VISIBLE)
-
-                    // Show page indicator if multiple photos
-                    if (count > 1) {
-                        views.setTextViewText(R.id.widget_counter, "${currentIndex + 1}/$count")
-                        views.setViewVisibility(R.id.widget_counter, View.VISIBLE)
-                    } else {
-                        views.setViewVisibility(R.id.widget_counter, View.GONE)
-                    }
-                } else {
+                if (!file.exists()) {
                     showEmptyState(views)
+                    appWidgetManager.updateAppWidget(widgetId, views)
+                    return@forEach
                 }
 
-                // Set up swipe/tap actions for navigation
+                // Photo
+                views.setImageViewBitmap(R.id.widget_image, BitmapFactory.decodeFile(imagePath))
+                views.setViewVisibility(R.id.widget_image, View.VISIBLE)
+                views.setViewVisibility(R.id.widget_empty, View.GONE)
+
+                // Bottom scrim — needed once we render text on top
+                views.setViewVisibility(R.id.widget_scrim, View.VISIBLE)
+
+                // Top-left: time-ago chip ("now", "5m", "2h", "3d")
+                val timeText = relativeTime(createdAtMs)
+                if (timeText != null) {
+                    views.setTextViewText(R.id.widget_time, timeText)
+                    views.setViewVisibility(R.id.widget_time, View.VISIBLE)
+                } else {
+                    views.setViewVisibility(R.id.widget_time, View.GONE)
+                }
+
+                // Top-right: page counter
+                if (count > 1) {
+                    views.setTextViewText(R.id.widget_counter, "${currentIndex + 1}/$count")
+                    views.setViewVisibility(R.id.widget_counter, View.VISIBLE)
+                } else {
+                    views.setViewVisibility(R.id.widget_counter, View.GONE)
+                }
+
+                // Bottom label group
+                views.setViewVisibility(R.id.widget_label_group, View.VISIBLE)
+                views.setTextViewText(R.id.widget_sender, senderName)
+                val sub = buildString {
+                    if (roomName.isNotEmpty()) append(roomName)
+                    if (likeCount > 0) {
+                        if (isNotEmpty()) append("  ·  ")
+                        append("❤ ").append(likeCount)
+                    }
+                }
+                if (sub.isNotEmpty()) {
+                    views.setTextViewText(R.id.widget_sub, sub)
+                    views.setViewVisibility(R.id.widget_sub, View.VISIBLE)
+                } else {
+                    views.setViewVisibility(R.id.widget_sub, View.GONE)
+                }
+                if (caption.isNotEmpty()) {
+                    views.setTextViewText(R.id.widget_caption, caption)
+                    views.setViewVisibility(R.id.widget_caption, View.VISIBLE)
+                } else {
+                    views.setViewVisibility(R.id.widget_caption, View.GONE)
+                }
+
+                // Coral favorite accent at the very bottom
+                views.setViewVisibility(
+                    R.id.widget_favorite_accent,
+                    if (isFavorite) View.VISIBLE else View.GONE
+                )
+
+                // Centered play badge for video posts
+                views.setViewVisibility(
+                    R.id.widget_play_badge,
+                    if (isVideo) View.VISIBLE else View.GONE
+                )
+
+                // Tap zones for navigating the photo rotation
                 if (count > 1) {
                     val nextIntent = Intent(context, MomentoWidgetReceiver::class.java).apply {
                         action = ACTION_NEXT
@@ -125,10 +181,33 @@ class MomentoWidgetReceiver : HomeWidgetProvider() {
 
     private fun showEmptyState(views: RemoteViews) {
         views.setViewVisibility(R.id.widget_image, View.GONE)
-        views.setViewVisibility(R.id.widget_sender, View.GONE)
+        views.setViewVisibility(R.id.widget_scrim, View.GONE)
+        views.setViewVisibility(R.id.widget_time, View.GONE)
         views.setViewVisibility(R.id.widget_counter, View.GONE)
+        views.setViewVisibility(R.id.widget_label_group, View.GONE)
+        views.setViewVisibility(R.id.widget_favorite_accent, View.GONE)
+        views.setViewVisibility(R.id.widget_play_badge, View.GONE)
         views.setViewVisibility(R.id.widget_next_area, View.GONE)
         views.setViewVisibility(R.id.widget_prev_area, View.GONE)
         views.setViewVisibility(R.id.widget_empty, View.VISIBLE)
+    }
+
+    private fun parseArray(json: String?): JSONArray =
+        try { JSONArray(json ?: "[]") } catch (_: Exception) { JSONArray() }
+
+    private fun JSONArray.optStringSafe(index: Int): String =
+        if (index < length()) optString(index, "") else ""
+
+    private fun JSONArray.optLongAt(index: Int): Long =
+        if (index < length()) optLong(index, 0L) else 0L
+
+    private fun relativeTime(ms: Long): String? {
+        if (ms <= 0L) return null
+        val delta = (System.currentTimeMillis() - ms) / 1000
+        if (delta < 0) return null
+        if (delta < 60) return "now"
+        if (delta < 3600) return "${delta / 60}m"
+        if (delta < 86400) return "${delta / 3600}h"
+        return "${delta / 86400}d"
     }
 }

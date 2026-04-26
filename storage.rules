@@ -12,5 +12,23 @@ service firebase.storage {
       // Authenticated users can read (needed to display photos)
       allow read: if request.auth != null;
     }
+
+    // Room photos (avatars)
+    match /room_photos/{userId}/{imageId} {
+      allow write: if request.auth != null
+        && request.auth.uid == userId
+        && request.resource.size < 5 * 1024 * 1024  // Max 5MB
+        && request.resource.contentType.matches('image/.*');
+      allow read: if request.auth != null;
+    }
+
+    // Profile photos (avatars)
+    match /profile_photos/{userId}/{imageId} {
+      allow write: if request.auth != null
+        && request.auth.uid == userId
+        && request.resource.size < 5 * 1024 * 1024  // Max 5MB
+        && request.resource.contentType.matches('image/.*');
+      allow read: if request.auth != null;
+    }
   }
 }

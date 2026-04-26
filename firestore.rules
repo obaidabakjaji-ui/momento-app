@@ -3,40 +3,153 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Users collection
+    // ===== Helpers =====
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function isSelf(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+    function room(roomId) {
+      return get(/databases/$(database)/documents/rooms/$(roomId)).data;
+    }
+    function isMember(roomId) {
+      return isSignedIn() && request.auth.uid in room(roomId).memberIds;
+    }
+    function isAdmin(roomId) {
+      return isSignedIn() && request.auth.uid in room(roomId).adminIds;
+    }
+    function isCreator(roomId) {
+      return isSignedIn() && request.auth.uid == room(roomId).createdBy;
+    }
+
+    // ===== Users =====
     match /users/{userId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null && request.auth.uid == userId;
-      allow update: if request.auth != null && (
-        request.auth.uid == userId ||
-        // Allow linked users to modify linkedUserIds (for unlinking)
-        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['linkedUserIds']))
-      );
+      allow read: if isSignedIn();
+      allow create: if isSelf(userId);
+      allow update: if isSelf(userId) ||
+        request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['roomIds', 'activeRoomIds', 'favoriteRoomIds']);
+      allow delete: if isSelf(userId);
     }
 
-    // Link requests collection
-    match /link_requests/{requestId} {
-      allow read: if request.auth != null && (
-        resource.data.fromUserId == request.auth.uid ||
-        resource.data.toUserId == request.auth.uid
-      );
-      allow create: if request.auth != null &&
-        request.resource.data.fromUserId == request.auth.uid;
-      allow update: if request.auth != null && (
-        resource.data.toUserId == request.auth.uid ||
-        resource.data.fromUserId == request.auth.uid
-      );
+    // ===== Email verification codes (function-managed, off-limits to clients) =====
+    // The `requestEmailCode` and `verifyEmailCode` Cloud Functions write the
+    // hash + expiry here using the Admin SDK (which bypasses these rules).
+    // No client should ever read or write directly — the plain code only ever
+    // travels via the email body.
+    match /email_verifications/{userId} {
+      allow read, write: if false;
     }
 
-    // Momentos collection
-    match /momentos/{momentoId} {
-      allow read: if request.auth != null && (
-        resource.data.senderId == request.auth.uid ||
-        resource.data.receiverId == request.auth.uid
-      );
-      allow create: if request.auth != null &&
-        request.resource.data.senderId == request.auth.uid;
+    // ===== Mail queue (function-only; the Trigger Email extension reads it) =====
+    match /mail/{docId} {
+      allow read, write: if false;
+    }
+
+    // ===== Reports (write-only from clients, read via Firebase Console) =====
+    match /reports/{reportId} {
+      allow read: if false;
+      allow create: if isSignedIn()
+        && request.resource.data.reporterId == request.auth.uid
+        && request.resource.data.type in ['user', 'post'];
       allow update, delete: if false;
+    }
+
+    // ===== Rooms =====
+    match /rooms/{roomId} {
+      allow read: if isSignedIn();
+
+      allow create: if isSignedIn()
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.adminIds == [request.auth.uid]
+        && request.resource.data.memberIds == [request.auth.uid];
+
+      allow update: if isSignedIn() && (
+        (
+          request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['memberIds']) &&
+          (
+            (resource.data.visibility == 'public' &&
+             request.resource.data.memberIds.toSet()
+               .difference(resource.data.memberIds.toSet()) == [request.auth.uid].toSet()) ||
+            (resource.data.memberIds.toSet()
+               .difference(request.resource.data.memberIds.toSet()) == [request.auth.uid].toSet())
+          )
+        ) ||
+        (
+          isAdmin(roomId) &&
+          request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['memberIds', 'adminIds', 'photoUrl',
+                      'requiresPostApproval', 'trustedUserIds'])
+        ) ||
+        (
+          isCreator(roomId) &&
+          request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['name', 'nameLower', 'memberIds', 'adminIds', 'photoUrl',
+                      'requiresPostApproval', 'trustedUserIds'])
+        )
+      );
+
+      allow delete: if isAdmin(roomId) ||
+        (isMember(roomId) && resource.data.memberIds.size() == 1);
+
+      match /join_requests/{userId} {
+        allow read: if isSelf(userId) || isAdmin(roomId);
+        allow create: if isSelf(userId)
+          && room(roomId).visibility == 'permission'
+          && !(request.auth.uid in room(roomId).memberIds);
+        allow delete: if isAdmin(roomId) || isSelf(userId);
+        allow update: if false;
+      }
+
+      match /posts/{postId} {
+        // Admins and the author can always read a post. Other members can
+        // only read non-pending posts (keeps unreviewed content out of sight).
+        allow read: if isMember(roomId)
+          && (
+            resource.data.pending == false
+            || isAdmin(roomId)
+            || resource.data.senderId == request.auth.uid
+          );
+
+        // On create, `pending` must match the room's current policy for the
+        // sender. Non-admin, non-trusted members in an approval-required room
+        // must set pending=true; everyone else sets pending=false.
+        allow create: if isMember(roomId)
+          && request.resource.data.senderId == request.auth.uid
+          && request.resource.data.roomId == roomId
+          && request.resource.data.pending == (
+            room(roomId).requiresPostApproval == true
+            && !(request.auth.uid in room(roomId).adminIds)
+            && !(request.auth.uid in room(roomId).trustedUserIds)
+          );
+
+        allow delete: if resource.data.senderId == request.auth.uid || isAdmin(roomId);
+
+        allow update: if isMember(roomId) && (
+          // Any member toggles their own like
+          (
+            request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['likedBy'])
+            && (
+              request.resource.data.likedBy.toSet()
+                .difference(resource.data.likedBy.toSet()) == [request.auth.uid].toSet() ||
+              resource.data.likedBy.toSet()
+                .difference(request.resource.data.likedBy.toSet()) == [request.auth.uid].toSet()
+            )
+          )
+          ||
+          // Admin approves a pending post by flipping pending=false
+          (
+            isAdmin(roomId)
+            && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['pending'])
+            && resource.data.pending == true
+            && request.resource.data.pending == false
+          )
+        );
+      }
     }
   }
 }

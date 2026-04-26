@@ -5,8 +5,14 @@ class AppUser {
   final String email;
   final String displayName;
   final String? photoUrl;
-  final List<String> linkedUserIds;
-  final String? inviteCode;
+  final List<String> roomIds;
+  final List<String> activeRoomIds;
+  final List<String> favoriteRoomIds;
+  final List<String> blockedUserIds;
+  final bool hasSeenOnboarding;
+  final int currentStreak;
+  final int longestStreak;
+  final DateTime? lastPostDate;
   final DateTime createdAt;
 
   AppUser({
@@ -14,27 +20,32 @@ class AppUser {
     required this.email,
     required this.displayName,
     this.photoUrl,
-    this.linkedUserIds = const [],
-    this.inviteCode,
+    this.roomIds = const [],
+    this.activeRoomIds = const [],
+    this.favoriteRoomIds = const [],
+    this.blockedUserIds = const [],
+    this.hasSeenOnboarding = false,
+    this.currentStreak = 0,
+    this.longestStreak = 0,
+    this.lastPostDate,
     required this.createdAt,
   });
 
   factory AppUser.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
-    // Support both old single linkedUserId and new linkedUserIds list
-    List<String> linked = [];
-    if (data['linkedUserIds'] != null) {
-      linked = List<String>.from(data['linkedUserIds']);
-    } else if (data['linkedUserId'] != null) {
-      linked = [data['linkedUserId'] as String];
-    }
     return AppUser(
       uid: doc.id,
       email: data['email'] ?? '',
       displayName: data['displayName'] ?? '',
       photoUrl: data['photoUrl'],
-      linkedUserIds: linked,
-      inviteCode: data['inviteCode'],
+      roomIds: List<String>.from(data['roomIds'] ?? const []),
+      activeRoomIds: List<String>.from(data['activeRoomIds'] ?? const []),
+      favoriteRoomIds: List<String>.from(data['favoriteRoomIds'] ?? const []),
+      blockedUserIds: List<String>.from(data['blockedUserIds'] ?? const []),
+      hasSeenOnboarding: data['hasSeenOnboarding'] ?? false,
+      currentStreak: (data['currentStreak'] ?? 0) as int,
+      longestStreak: (data['longestStreak'] ?? 0) as int,
+      lastPostDate: (data['lastPostDate'] as Timestamp?)?.toDate(),
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
   }
@@ -43,10 +54,18 @@ class AppUser {
         'email': email,
         'displayName': displayName,
         'photoUrl': photoUrl,
-        'linkedUserIds': linkedUserIds,
-        'inviteCode': inviteCode,
+        'roomIds': roomIds,
+        'activeRoomIds': activeRoomIds,
+        'favoriteRoomIds': favoriteRoomIds,
+        'blockedUserIds': blockedUserIds,
+        'hasSeenOnboarding': hasSeenOnboarding,
+        'currentStreak': currentStreak,
+        'longestStreak': longestStreak,
+        'lastPostDate':
+            lastPostDate == null ? null : Timestamp.fromDate(lastPostDate!),
         'createdAt': Timestamp.fromDate(createdAt),
       };
 
-  bool get isLinked => linkedUserIds.isNotEmpty;
+  bool get hasRooms => roomIds.isNotEmpty;
+  bool hasBlocked(String uid) => blockedUserIds.contains(uid);
 }

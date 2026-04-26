@@ -1,4 +1,16 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Camera + mic for recording 6sec clips. Audio is stripped before
+         posting (video_compress includeAudio: false), but the OS still
+         requires the permission to start a recording session. -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <!-- Picking video from gallery on Android 13+ uses the granular
+         READ_MEDIA_VIDEO permission instead of READ_EXTERNAL_STORAGE. -->
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <!-- video_player streams over the network. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <application
         android:label="momento"
         android:name="${applicationName}"

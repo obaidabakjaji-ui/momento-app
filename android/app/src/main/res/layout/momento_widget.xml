@@ -4,7 +4,7 @@
     android:layout_height="match_parent"
     android:background="@drawable/widget_background">
 
-    <!-- Photo display -->
+    <!-- Photo -->
     <ImageView
         android:id="@+id/widget_image"
         android:layout_width="match_parent"
@@ -13,23 +13,26 @@
         android:visibility="gone"
         android:contentDescription="Momento photo" />
 
-    <!-- Sender name at bottom -->
-    <TextView
-        android:id="@+id/widget_sender"
+    <!-- Bottom gradient scrim so overlay text stays legible -->
+    <View
+        android:id="@+id/widget_scrim"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="96dp"
         android:layout_gravity="bottom"
-        android:background="#60000000"
-        android:paddingStart="12dp"
-        android:paddingEnd="12dp"
-        android:paddingTop="8dp"
-        android:paddingBottom="8dp"
-        android:textColor="#FFFFFF"
-        android:textSize="13sp"
-        android:textStyle="bold"
+        android:background="@drawable/widget_bottom_scrim"
         android:visibility="gone" />
 
-    <!-- Page counter (top right) -->
+    <!-- Centered play badge for video posts -->
+    <ImageView
+        android:id="@+id/widget_play_badge"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_gravity="center"
+        android:src="@drawable/widget_play_badge"
+        android:contentDescription="Plays a video"
+        android:visibility="gone" />
+
+    <!-- Top right page counter -->
     <TextView
         android:id="@+id/widget_counter"
         android:layout_width="wrap_content"
@@ -44,6 +47,81 @@
         android:textColor="#FFFFFF"
         android:textSize="10sp"
         android:textStyle="bold"
+        android:visibility="gone" />
+
+    <!-- Top left "time ago" chip -->
+    <TextView
+        android:id="@+id/widget_time"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|start"
+        android:layout_margin="8dp"
+        android:background="@drawable/widget_counter_bg"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp"
+        android:paddingTop="3dp"
+        android:paddingBottom="3dp"
+        android:textColor="#FFFFFF"
+        android:textSize="10sp"
+        android:textStyle="bold"
+        android:visibility="gone" />
+
+    <!-- Bottom label block: sender on top, then room · likes -->
+    <LinearLayout
+        android:id="@+id/widget_label_group"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:orientation="vertical"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="10dp"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/widget_sender"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:shadowColor="#80000000"
+            android:shadowDx="0"
+            android:shadowDy="1"
+            android:shadowRadius="4"
+            android:maxLines="1"
+            android:ellipsize="end" />
+
+        <TextView
+            android:id="@+id/widget_sub"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#E0FFFFFF"
+            android:textSize="11sp"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:layout_marginTop="1dp" />
+
+        <TextView
+            android:id="@+id/widget_caption"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#D0FFFFFF"
+            android:textSize="11sp"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:layout_marginTop="2dp"
+            android:visibility="gone" />
+    </LinearLayout>
+
+    <!-- Coral accent bar at very bottom, shown for favorite rooms -->
+    <View
+        android:id="@+id/widget_favorite_accent"
+        android:layout_width="match_parent"
+        android:layout_height="3dp"
+        android:layout_gravity="bottom"
+        android:background="#FF9A56"
         android:visibility="gone" />
 
     <!-- Tap zones for prev/next navigation -->
@@ -81,7 +159,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="No new photos"
+            android:text="Your rooms are waiting"
             android:textColor="#802D2337"
             android:textSize="12sp"
             android:layout_marginTop="4dp" />
