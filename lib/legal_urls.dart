@@ -1,9 +1,8 @@
-/// Central place to swap in the real hosted legal documents once they exist.
-/// Any screen that links to Terms / Privacy reads from these constants.
+/// Central place for the hosted legal document URLs. Any screen that links
+/// to Terms / Privacy reads from these constants.
 ///
-/// The current values are placeholders — replace them with your real URLs
-/// before launch.
+/// Documents are hosted on Cloudflare Pages at huddlex.app.
 library;
 
-const String kTermsOfServiceUrl = 'https://momento-app.example.com/terms';
-const String kPrivacyPolicyUrl = 'https://momento-app.example.com/privacy';
+const String kTermsOfServiceUrl = 'https://huddlex.app/terms.html';
+const String kPrivacyPolicyUrl = 'https://huddlex.app/privacy.html';
