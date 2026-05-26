@@ -9,10 +9,10 @@ class AppLocalizationsAr extends AppLocalizations {
   AppLocalizationsAr([String locale = 'ar']) : super(locale);
 
   @override
-  String get appName => 'Momento';
+  String get appName => 'Huddlex';
 
   @override
-  String get appTagline => 'كل لحظة، تُشارك بأناقة';
+  String get appTagline => 'كل لمّة، تُشارك بأناقة';
 
   @override
   String get commonCancel => 'إلغاء';
@@ -151,7 +151,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get verifyResend => 'إعادة إرسال الرمز';
 
   @override
-  String get onboardingWelcomeTitle => 'مرحبًا بك في Momento';
+  String get onboardingWelcomeTitle => 'مرحبًا بك في Huddlex';
 
   @override
   String get onboardingWelcomeBody =>
@@ -190,7 +190,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get homeAccount => 'الحساب';
 
   @override
-  String get homeNewMomento => 'لحظة جديدة';
+  String get homeNewMomento => 'لمّة جديدة';
 
   @override
   String get homeCouldNotLoadAccount => 'تعذر تحميل حسابك.';
@@ -209,7 +209,7 @@ class AppLocalizationsAr extends AppLocalizations {
       'افتح علامة المجتمعات لإنشاء أو الانضمام إلى واحد.';
 
   @override
-  String get homeNoMomentosTitle => 'لا توجد لحظات بعد';
+  String get homeNoMomentosTitle => 'لا توجد لمّات بعد';
 
   @override
   String get homeNoMomentosBody => 'التقط صورة وشاركها مع مجتمعاتك!';
@@ -239,7 +239,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get roomsEmptyBody =>
-      'أنشئ مجتمعًا جديدًا أو انضم إلى واحد برمز لتبدأ مشاركة لحظاتك.';
+      'أنشئ مجتمعًا جديدًا أو انضم إلى واحد برمز لتبدأ مشاركة لمّاتك.';
 
   @override
   String get roomsCodePrefix => 'الرمز ';
@@ -349,7 +349,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get roomDetailCouldNotLoadPosts => 'تعذر تحميل المنشورات.';
 
   @override
-  String get roomDetailEmptyTitle => 'لا توجد لحظات في هذا المجتمع بعد';
+  String get roomDetailEmptyTitle => 'لا توجد لمّات في هذا المجتمع بعد';
 
   @override
   String get roomDetailEmptyBody =>
@@ -392,12 +392,12 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String roomSettingsShareMessage(String name, String code) {
-    return 'انضم إلى مجتمع \"$name\" على Momento — استخدم الرمز $code';
+    return 'انضم إلى مجتمع \"$name\" على Huddlex — استخدم الرمز $code';
   }
 
   @override
   String roomSettingsShareSubject(String name) {
-    return 'انضم إلى $name على Momento';
+    return 'انضم إلى $name على Huddlex';
   }
 
   @override
@@ -452,7 +452,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String roomSettingsLeaveBody(String name) {
-    return 'ستتوقف عن استلام لحظات من \"$name\".';
+    return 'ستتوقف عن استلام لمّات من \"$name\".';
   }
 
   @override
@@ -481,11 +481,11 @@ class AppLocalizationsAr extends AppLocalizations {
   String get pendingPostsApprove => 'موافقة';
 
   @override
-  String get cameraTitle => 'لحظة جديدة';
+  String get cameraTitle => 'لمّة جديدة';
 
   @override
   String get cameraNoRooms =>
-      'انضم إلى مجتمع أو أنشئ واحدًا أولًا لنشر اللحظات.';
+      'انضم إلى مجتمع أو أنشئ واحدًا أولًا لنشر اللمّات.';
 
   @override
   String get cameraProcessingVideo => 'معالجة الفيديو…';
@@ -515,7 +515,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get cameraPostClip => 'نشر المقطع';
 
   @override
-  String get cameraPostMomento => 'نشر اللحظة';
+  String get cameraPostMomento => 'نشر اللمّة';
 
   @override
   String get cameraCaptionHint => 'أضف تعليقًا (اختياري)';

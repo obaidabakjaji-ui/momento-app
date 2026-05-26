@@ -9,7 +9,7 @@ class AppLocalizationsZh extends AppLocalizations {
   AppLocalizationsZh([String locale = 'zh']) : super(locale);
 
   @override
-  String get appName => 'Momento';
+  String get appName => 'Huddlex';
 
   @override
   String get appTagline => '每个瞬间，优雅分享';
@@ -149,7 +149,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get verifyResend => '重新发送验证码';
 
   @override
-  String get onboardingWelcomeTitle => '欢迎来到 Momento';
+  String get onboardingWelcomeTitle => '欢迎来到 Huddlex';
 
   @override
   String get onboardingWelcomeBody => '和最亲近的人分享真实的瞬间。没有点赞数，没有算法 — 只有日常的小片段。';
@@ -186,7 +186,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get homeAccount => '账户';
 
   @override
-  String get homeNewMomento => '新 Momento';
+  String get homeNewMomento => '新 Huddle';
 
   @override
   String get homeCouldNotLoadAccount => '无法加载您的账户。';
@@ -204,7 +204,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get homeNoRoomsHomeBody => '打开社群标签来创建或加入。';
 
   @override
-  String get homeNoMomentosTitle => '还没有 Momento';
+  String get homeNoMomentosTitle => '还没有 Huddle';
 
   @override
   String get homeNoMomentosBody => '拍张照片，分享给您的社群！';
@@ -330,7 +330,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get roomDetailCouldNotLoadPosts => '无法加载帖子。';
 
   @override
-  String get roomDetailEmptyTitle => '这个社群还没有 Momento';
+  String get roomDetailEmptyTitle => '这个社群还没有 Huddle';
 
   @override
   String get roomDetailEmptyBody => '用相机拍张照片成为第一个吧。';
@@ -372,12 +372,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String roomSettingsShareMessage(String name, String code) {
-    return '加入我在 Momento 的 \"$name\" 社群 — 使用代码 $code';
+    return '加入我在 Huddlex 的 \"$name\" 社群 — 使用代码 $code';
   }
 
   @override
   String roomSettingsShareSubject(String name) {
-    return '加入 Momento 的 $name';
+    return '加入 Huddlex 的 $name';
   }
 
   @override
@@ -432,7 +432,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String roomSettingsLeaveBody(String name) {
-    return '您将不再收到 \"$name\" 的 Momento。';
+    return '您将不再收到 \"$name\" 的 Huddle。';
   }
 
   @override
@@ -461,10 +461,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get pendingPostsApprove => '批准';
 
   @override
-  String get cameraTitle => '新 Momento';
+  String get cameraTitle => '新 Huddle';
 
   @override
-  String get cameraNoRooms => '请先加入或创建社群，再发布 Momento。';
+  String get cameraNoRooms => '请先加入或创建社群，再发布 Huddle。';
 
   @override
   String get cameraProcessingVideo => '正在处理视频…';
@@ -494,7 +494,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get cameraPostClip => '发布视频';
 
   @override
-  String get cameraPostMomento => '发布 Momento';
+  String get cameraPostMomento => '发布 Huddle';
 
   @override
   String get cameraCaptionHint => '添加标题（可选）';

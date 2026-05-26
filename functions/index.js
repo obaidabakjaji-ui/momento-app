@@ -1,5 +1,5 @@
 /**
- * Momento — email code verification.
+ * Huddlex — email code verification.
  *
  * Two callable functions:
  *   requestEmailCode  → generates a 6-digit code, stores its hash, queues an
@@ -40,12 +40,12 @@ function generateCode() {
 function buildEmail(code, displayName) {
   const greeting = displayName ? `Hi ${displayName},` : "Hi,";
   return {
-    subject: "Your Momento verification code",
-    text: `${greeting}\n\nYour Momento verification code is: ${code}\n\nIt expires in 10 minutes. If you didn't request this, you can ignore this email.\n\n— Momento`,
+    subject: "Your Huddlex verification code",
+    text: `${greeting}\n\nYour Huddlex verification code is: ${code}\n\nIt expires in 10 minutes. If you didn't request this, you can ignore this email.\n\n— Huddlex`,
     html: `
       <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#FFF5EE;padding:32px;color:#2D2337;">
         <div style="max-width:480px;margin:0 auto;background:#fff;border-radius:16px;padding:32px;">
-          <h1 style="margin:0 0 8px 0;font-size:22px;color:#FF6B6B;">Momento</h1>
+          <h1 style="margin:0 0 8px 0;font-size:22px;color:#FF6B6B;">Huddlex</h1>
           <p style="margin:0 0 24px 0;color:#2D2337;opacity:0.7;">${greeting}</p>
           <p style="margin:0 0 12px 0;">Your verification code is</p>
           <div style="font-size:34px;font-weight:700;letter-spacing:6px;background:#FFF5EE;border-radius:12px;padding:16px;text-align:center;color:#2D2337;">

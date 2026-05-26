@@ -9,10 +9,10 @@ class AppLocalizationsIt extends AppLocalizations {
   AppLocalizationsIt([String locale = 'it']) : super(locale);
 
   @override
-  String get appName => 'Momento';
+  String get appName => 'Huddlex';
 
   @override
-  String get appTagline => 'Ogni momento, condiviso con stile';
+  String get appTagline => 'Ogni huddle, condiviso con stile';
 
   @override
   String get commonCancel => 'Annulla';
@@ -153,7 +153,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get verifyResend => 'Rinvia il codice';
 
   @override
-  String get onboardingWelcomeTitle => 'Benvenuto su Momento';
+  String get onboardingWelcomeTitle => 'Benvenuto su Huddlex';
 
   @override
   String get onboardingWelcomeBody =>
@@ -192,7 +192,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get homeAccount => 'Account';
 
   @override
-  String get homeNewMomento => 'Nuovo Momento';
+  String get homeNewMomento => 'Nuovo Huddle';
 
   @override
   String get homeCouldNotLoadAccount => 'Impossibile caricare il tuo account.';
@@ -211,7 +211,7 @@ class AppLocalizationsIt extends AppLocalizations {
       'Apri la scheda Comunità per crearne o unirti a una.';
 
   @override
-  String get homeNoMomentosTitle => 'Nessun momento';
+  String get homeNoMomentosTitle => 'Nessun huddle';
 
   @override
   String get homeNoMomentosBody =>
@@ -349,7 +349,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get roomDetailCouldNotLoadPosts => 'Impossibile caricare i post.';
 
   @override
-  String get roomDetailEmptyTitle => 'Nessun momento in questa comunità';
+  String get roomDetailEmptyTitle => 'Nessun huddle in questa comunità';
 
   @override
   String get roomDetailEmptyBody =>
@@ -392,12 +392,12 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String roomSettingsShareMessage(String name, String code) {
-    return 'Unisciti alla mia comunità \"$name\" su Momento — usa il codice $code';
+    return 'Unisciti alla mia comunità \"$name\" su Huddlex — usa il codice $code';
   }
 
   @override
   String roomSettingsShareSubject(String name) {
-    return 'Unisciti a $name su Momento';
+    return 'Unisciti a $name su Huddlex';
   }
 
   @override
@@ -482,7 +482,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get pendingPostsApprove => 'Approva';
 
   @override
-  String get cameraTitle => 'Nuovo Momento';
+  String get cameraTitle => 'Nuovo Huddle';
 
   @override
   String get cameraNoRooms =>
@@ -516,7 +516,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get cameraPostClip => 'Pubblica clip';
 
   @override
-  String get cameraPostMomento => 'Pubblica Momento';
+  String get cameraPostMomento => 'Pubblica Huddle';
 
   @override
   String get cameraCaptionHint => 'Aggiungi una didascalia (opzionale)';

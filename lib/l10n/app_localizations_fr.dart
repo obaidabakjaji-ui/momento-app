@@ -9,10 +9,10 @@ class AppLocalizationsFr extends AppLocalizations {
   AppLocalizationsFr([String locale = 'fr']) : super(locale);
 
   @override
-  String get appName => 'Momento';
+  String get appName => 'Huddlex';
 
   @override
-  String get appTagline => 'Chaque instant, partagé avec élégance';
+  String get appTagline => 'Chaque huddle, partagé avec élégance';
 
   @override
   String get commonCancel => 'Annuler';
@@ -157,7 +157,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get verifyResend => 'Renvoyer le code';
 
   @override
-  String get onboardingWelcomeTitle => 'Bienvenue sur Momento';
+  String get onboardingWelcomeTitle => 'Bienvenue sur Huddlex';
 
   @override
   String get onboardingWelcomeBody =>
@@ -196,7 +196,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get homeAccount => 'Compte';
 
   @override
-  String get homeNewMomento => 'Nouveau Momento';
+  String get homeNewMomento => 'Nouveau Huddle';
 
   @override
   String get homeCouldNotLoadAccount => 'Impossible de charger votre compte.';
@@ -215,7 +215,7 @@ class AppLocalizationsFr extends AppLocalizations {
       'Ouvrez l\'onglet Communautés pour en créer ou en rejoindre une.';
 
   @override
-  String get homeNoMomentosTitle => 'Aucun momento';
+  String get homeNoMomentosTitle => 'Aucun huddle';
 
   @override
   String get homeNoMomentosBody =>
@@ -246,7 +246,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get roomsEmptyBody =>
-      'Créez une nouvelle communauté ou rejoignez-en une avec un code pour commencer à partager des momentos.';
+      'Créez une nouvelle communauté ou rejoignez-en une avec un code pour commencer à partager des huddles.';
 
   @override
   String get roomsCodePrefix => 'Code ';
@@ -354,7 +354,7 @@ class AppLocalizationsFr extends AppLocalizations {
       'Impossible de charger les publications.';
 
   @override
-  String get roomDetailEmptyTitle => 'Aucun momento dans cette communauté';
+  String get roomDetailEmptyTitle => 'Aucun huddle dans cette communauté';
 
   @override
   String get roomDetailEmptyBody =>
@@ -398,12 +398,12 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String roomSettingsShareMessage(String name, String code) {
-    return 'Rejoins ma communauté \"$name\" sur Momento — utilise le code $code';
+    return 'Rejoins ma communauté \"$name\" sur Huddlex — utilise le code $code';
   }
 
   @override
   String roomSettingsShareSubject(String name) {
-    return 'Rejoindre $name sur Momento';
+    return 'Rejoindre $name sur Huddlex';
   }
 
   @override
@@ -461,7 +461,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String roomSettingsLeaveBody(String name) {
-    return 'Vous ne recevrez plus de momentos de \"$name\".';
+    return 'Vous ne recevrez plus de huddles de \"$name\".';
   }
 
   @override
@@ -490,11 +490,11 @@ class AppLocalizationsFr extends AppLocalizations {
   String get pendingPostsApprove => 'Approuver';
 
   @override
-  String get cameraTitle => 'Nouveau Momento';
+  String get cameraTitle => 'Nouveau Huddle';
 
   @override
   String get cameraNoRooms =>
-      'Rejoignez ou créez une communauté avant de publier des momentos.';
+      'Rejoignez ou créez une communauté avant de publier des huddles.';
 
   @override
   String get cameraProcessingVideo => 'Traitement de la vidéo…';
@@ -524,7 +524,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get cameraPostClip => 'Publier le clip';
 
   @override
-  String get cameraPostMomento => 'Publier le Momento';
+  String get cameraPostMomento => 'Publier le Huddle';
 
   @override
   String get cameraCaptionHint => 'Ajouter une légende (facultatif)';

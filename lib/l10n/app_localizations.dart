@@ -113,13 +113,13 @@ abstract class AppLocalizations {
   /// No description provided for @appName.
   ///
   /// In en, this message translates to:
-  /// **'Momento'**
+  /// **'Huddlex'**
   String get appName;
 
   /// No description provided for @appTagline.
   ///
   /// In en, this message translates to:
-  /// **'Every moment, shared beautifully'**
+  /// **'Every huddle, shared beautifully'**
   String get appTagline;
 
   /// No description provided for @commonCancel.
@@ -377,7 +377,7 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingWelcomeTitle.
   ///
   /// In en, this message translates to:
-  /// **'Welcome to Momento'**
+  /// **'Welcome to Huddlex'**
   String get onboardingWelcomeTitle;
 
   /// No description provided for @onboardingWelcomeBody.
@@ -449,7 +449,7 @@ abstract class AppLocalizations {
   /// No description provided for @homeNewMomento.
   ///
   /// In en, this message translates to:
-  /// **'New Momento'**
+  /// **'New Huddle'**
   String get homeNewMomento;
 
   /// No description provided for @homeCouldNotLoadAccount.
@@ -485,7 +485,7 @@ abstract class AppLocalizations {
   /// No description provided for @homeNoMomentosTitle.
   ///
   /// In en, this message translates to:
-  /// **'No momentos yet'**
+  /// **'No huddles yet'**
   String get homeNoMomentosTitle;
 
   /// No description provided for @homeNoMomentosBody.
@@ -539,7 +539,7 @@ abstract class AppLocalizations {
   /// No description provided for @roomsEmptyBody.
   ///
   /// In en, this message translates to:
-  /// **'Create a new community or join one with a code to start sharing momentos.'**
+  /// **'Create a new community or join one with a code to start sharing huddles.'**
   String get roomsEmptyBody;
 
   /// No description provided for @roomsCodePrefix.
@@ -725,7 +725,7 @@ abstract class AppLocalizations {
   /// No description provided for @roomDetailEmptyTitle.
   ///
   /// In en, this message translates to:
-  /// **'No momentos in this community yet'**
+  /// **'No huddles in this community yet'**
   String get roomDetailEmptyTitle;
 
   /// No description provided for @roomDetailEmptyBody.
@@ -803,13 +803,13 @@ abstract class AppLocalizations {
   /// No description provided for @roomSettingsShareMessage.
   ///
   /// In en, this message translates to:
-  /// **'Join my \"{name}\" community on Momento — use code {code}'**
+  /// **'Join my \"{name}\" community on Huddlex — use code {code}'**
   String roomSettingsShareMessage(String name, String code);
 
   /// No description provided for @roomSettingsShareSubject.
   ///
   /// In en, this message translates to:
-  /// **'Join {name} on Momento'**
+  /// **'Join {name} on Huddlex'**
   String roomSettingsShareSubject(String name);
 
   /// No description provided for @roomSettingsRequirePostApproval.
@@ -905,7 +905,7 @@ abstract class AppLocalizations {
   /// No description provided for @roomSettingsLeaveBody.
   ///
   /// In en, this message translates to:
-  /// **'You will stop receiving momentos from \"{name}\".'**
+  /// **'You will stop receiving huddles from \"{name}\".'**
   String roomSettingsLeaveBody(String name);
 
   /// No description provided for @roomSettingsLeave.
@@ -953,13 +953,13 @@ abstract class AppLocalizations {
   /// No description provided for @cameraTitle.
   ///
   /// In en, this message translates to:
-  /// **'New Momento'**
+  /// **'New Huddle'**
   String get cameraTitle;
 
   /// No description provided for @cameraNoRooms.
   ///
   /// In en, this message translates to:
-  /// **'Join or create a community first to post momentos.'**
+  /// **'Join or create a community first to post huddles.'**
   String get cameraNoRooms;
 
   /// No description provided for @cameraProcessingVideo.
@@ -1019,7 +1019,7 @@ abstract class AppLocalizations {
   /// No description provided for @cameraPostMomento.
   ///
   /// In en, this message translates to:
-  /// **'Post Momento'**
+  /// **'Post Huddle'**
   String get cameraPostMomento;
 
   /// No description provided for @cameraCaptionHint.

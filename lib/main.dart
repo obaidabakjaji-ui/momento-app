@@ -30,7 +30,7 @@ class MomentoApp extends StatelessWidget {
       animation: LocaleService.instance,
       builder: (context, _) {
         return MaterialApp(
-          title: 'Momento',
+          title: 'Huddlex',
           theme: MomentoTheme.light,
           debugShowCheckedModeBanner: false,
           locale: LocaleService.instance.locale,

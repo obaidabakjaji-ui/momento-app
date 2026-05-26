@@ -9,7 +9,7 @@ class AppLocalizationsKo extends AppLocalizations {
   AppLocalizationsKo([String locale = 'ko']) : super(locale);
 
   @override
-  String get appName => 'Momento';
+  String get appName => 'Huddlex';
 
   @override
   String get appTagline => '모든 순간을, 아름답게 공유하세요';
@@ -149,7 +149,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get verifyResend => '코드 다시 보내기';
 
   @override
-  String get onboardingWelcomeTitle => 'Momento에 오신 것을 환영합니다';
+  String get onboardingWelcomeTitle => 'Huddlex에 오신 것을 환영합니다';
 
   @override
   String get onboardingWelcomeBody =>
@@ -188,7 +188,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get homeAccount => '계정';
 
   @override
-  String get homeNewMomento => '새 Momento';
+  String get homeNewMomento => '새 Huddle';
 
   @override
   String get homeCouldNotLoadAccount => '계정을 불러올 수 없습니다.';
@@ -206,7 +206,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get homeNoRoomsHomeBody => '커뮤니티 탭을 열어 만들거나 참여하세요.';
 
   @override
-  String get homeNoMomentosTitle => '아직 Momento가 없습니다';
+  String get homeNoMomentosTitle => '아직 Huddle가 없습니다';
 
   @override
   String get homeNoMomentosBody => '사진을 찍어 커뮤니티와 공유하세요!';
@@ -235,7 +235,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get roomsEmptyTitle => '아직 커뮤니티가 없습니다';
 
   @override
-  String get roomsEmptyBody => '새 커뮤니티를 만들거나 코드로 참여하여 Momento를 공유하세요.';
+  String get roomsEmptyBody => '새 커뮤니티를 만들거나 코드로 참여하여 Huddle를 공유하세요.';
 
   @override
   String get roomsCodePrefix => '코드 ';
@@ -332,7 +332,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get roomDetailCouldNotLoadPosts => '게시물을 불러올 수 없습니다.';
 
   @override
-  String get roomDetailEmptyTitle => '아직 이 커뮤니티에 Momento가 없습니다';
+  String get roomDetailEmptyTitle => '아직 이 커뮤니티에 Huddle가 없습니다';
 
   @override
   String get roomDetailEmptyBody => '카메라로 사진을 찍어 첫 번째가 되어 보세요.';
@@ -374,12 +374,12 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String roomSettingsShareMessage(String name, String code) {
-    return 'Momento에서 내 \"$name\" 커뮤니티에 참여하세요 — 코드 $code';
+    return 'Huddlex에서 내 \"$name\" 커뮤니티에 참여하세요 — 코드 $code';
   }
 
   @override
   String roomSettingsShareSubject(String name) {
-    return 'Momento의 $name에 참여';
+    return 'Huddlex의 $name에 참여';
   }
 
   @override
@@ -434,7 +434,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String roomSettingsLeaveBody(String name) {
-    return '\"$name\"의 Momento를 더 이상 받지 않습니다.';
+    return '\"$name\"의 Huddle를 더 이상 받지 않습니다.';
   }
 
   @override
@@ -463,10 +463,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get pendingPostsApprove => '승인';
 
   @override
-  String get cameraTitle => '새 Momento';
+  String get cameraTitle => '새 Huddle';
 
   @override
-  String get cameraNoRooms => 'Momento를 게시하려면 먼저 커뮤니티를 만들거나 참여하세요.';
+  String get cameraNoRooms => 'Huddle를 게시하려면 먼저 커뮤니티를 만들거나 참여하세요.';
 
   @override
   String get cameraProcessingVideo => '동영상 처리 중…';
@@ -496,7 +496,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get cameraPostClip => '클립 게시';
 
   @override
-  String get cameraPostMomento => 'Momento 게시';
+  String get cameraPostMomento => 'Huddle 게시';
 
   @override
   String get cameraCaptionHint => '캡션 추가 (선택)';

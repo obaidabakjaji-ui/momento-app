@@ -496,8 +496,8 @@ struct MomentoWidget: Widget {
                     Color(hex: "FFF5EE")
                 }
         }
-        .configurationDisplayName("Momento")
-        .description("See the latest photos from your rooms")
+        .configurationDisplayName("Huddlex")
+        .description("See the latest huddles from your communities")
         .supportedFamilies([.systemSmall, .systemMedium])
         .contentMarginsDisabled()
     }
