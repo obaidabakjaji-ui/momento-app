@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:share_plus/share_plus.dart';
+import '../../l10n/app_localizations.dart';
 import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
 import '../../services/room_service.dart';
@@ -31,6 +32,7 @@ class _RoomSettingsScreenState extends State<RoomSettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final uid = _auth.currentUser!.uid;
 
     return StreamBuilder<Room?>(
@@ -46,12 +48,12 @@ class _RoomSettingsScreenState extends State<RoomSettingsScreen> {
 
         return Scaffold(
           appBar: AppBar(
-            title: const Text('Room Settings'),
+            title: Text(l.roomSettingsTitle),
             actions: [
               if (isCreator)
                 IconButton(
                   icon: const Icon(Icons.edit_outlined),
-                  tooltip: 'Rename room',
+                  tooltip: l.roomSettingsRename,
                   onPressed: () => _renameRoom(room),
                 ),
             ],
@@ -64,18 +66,18 @@ class _RoomSettingsScreenState extends State<RoomSettingsScreen> {
               _buildCodeCard(room),
               const SizedBox(height: 24),
               if (isAdmin) ...[
-                _sectionTitle('Moderation'),
+                _sectionTitle(l.roomSettingsModeration),
                 const SizedBox(height: 8),
                 _buildModerationCard(room),
                 const SizedBox(height: 24),
               ],
               if (isAdmin && room.visibility == RoomVisibility.permission) ...[
-                _sectionTitle('Pending Join Requests'),
+                _sectionTitle(l.roomSettingsPendingJoinRequests),
                 const SizedBox(height: 8),
                 _buildJoinRequests(room),
                 const SizedBox(height: 24),
               ],
-              _sectionTitle('Members (${room.memberCount})'),
+              _sectionTitle(l.roomSettingsMembersCount(room.memberCount)),
               const SizedBox(height: 8),
               _buildMembers(room, isAdmin, uid),
               const SizedBox(height: 32),
@@ -83,7 +85,7 @@ class _RoomSettingsScreenState extends State<RoomSettingsScreen> {
                 OutlinedButton.icon(
                   onPressed: () => _confirmLeave(room),
                   icon: const Icon(Icons.logout),
-                  label: const Text('Leave Room'),
+                  label: Text(l.roomSettingsLeaveRoom),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: Colors.red,
                     side: const BorderSide(color: Colors.red),
@@ -94,7 +96,7 @@ class _RoomSettingsScreenState extends State<RoomSettingsScreen> {
                 OutlinedButton.icon(
                   onPressed: () => _confirmDelete(room),
                   icon: const Icon(Icons.delete_outline),
-                  label: const Text('Delete Room'),
+                  label: Text(l.roomSettingsDeleteRoom),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: Colors.red,
                     side: const BorderSide(color: Colors.red),
@@ -109,6 +111,7 @@ class _RoomSettingsScreenState extends State<RoomSettingsScreen> {
   }
 
   Widget _buildHeader(Room room) {
+    final l = AppLocalizations.of(context);
     final isAdmin = room.isAdmin(_auth.currentUser!.uid);
     return Container(
       padding: const EdgeInsets.all(20),
@@ -198,8 +201,8 @@ class _RoomSettingsScreenState extends State<RoomSettingsScreen> {
                     const SizedBox(width: 4),
                     Text(
                       room.visibility == RoomVisibility.public
-                          ? 'Public'
-                          : 'Permission',
+                          ? l.roomSettingsPublic
+                          : l.roomSettingsPermission,
                       style: TextStyle(
                         fontSize: 12,
                         color: MomentoTheme.deepPlum.withValues(alpha: 0.6),
@@ -216,6 +219,7 @@ class _RoomSettingsScreenState extends State<RoomSettingsScreen> {
   }
 
   Widget _buildCodeCard(Room room) {
+    final l = AppLocalizations.of(context);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -227,9 +231,9 @@ class _RoomSettingsScreenState extends State<RoomSettingsScreen> {
       ),
       child: Column(
         children: [
-          const Text(
-            'Room code',
-            style: TextStyle(color: Colors.white70, fontSize: 14),
+          Text(
+            l.roomSettingsRoomCode,
+            style: const TextStyle(color: Colors.white70, fontSize: 14),
           ),
           const SizedBox(height: 6),
           Text(
@@ -249,26 +253,25 @@ class _RoomSettingsScreenState extends State<RoomSettingsScreen> {
                 onPressed: () {
                   Clipboard.setData(ClipboardData(text: room.code));
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Code copied!')),
+                    SnackBar(content: Text(l.roomSettingsCodeCopied)),
                   );
                 },
                 icon:
                     const Icon(Icons.copy, color: Colors.white70, size: 16),
-                label: const Text('Copy',
-                    style: TextStyle(color: Colors.white70)),
+                label: Text(l.commonCopy,
+                    style: const TextStyle(color: Colors.white70)),
               ),
               TextButton.icon(
                 onPressed: () => SharePlus.instance.share(
                   ShareParams(
-                    text:
-                        'Join my "${room.name}" room on Momento — use code ${room.code}',
-                    subject: 'Join ${room.name} on Momento',
+                    text: l.roomSettingsShareMessage(room.name, room.code),
+                    subject: l.roomSettingsShareSubject(room.name),
                   ),
                 ),
                 icon: const Icon(Icons.share,
                     color: Colors.white70, size: 16),
-                label: const Text('Share',
-                    style: TextStyle(color: Colors.white70)),
+                label: Text(l.commonShare,
+                    style: const TextStyle(color: Colors.white70)),
               ),
             ],
           ),
@@ -289,6 +292,7 @@ class _RoomSettingsScreenState extends State<RoomSettingsScreen> {
   }
 
   Widget _buildModerationCard(Room room) {
+    final l = AppLocalizations.of(context);
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -303,16 +307,15 @@ class _RoomSettingsScreenState extends State<RoomSettingsScreen> {
               requires: v,
             ),
             activeThumbColor: MomentoTheme.coral,
-            title: const Text(
-              'Require post approval',
-              style: TextStyle(
+            title: Text(
+              l.roomSettingsRequirePostApproval,
+              style: const TextStyle(
                 fontWeight: FontWeight.w600,
                 color: MomentoTheme.deepPlum,
               ),
             ),
             subtitle: Text(
-              'Posts by regular members wait for admin approval. '
-              'Admins and trusted users always post immediately.',
+              l.roomSettingsRequirePostApprovalDescription,
               style: TextStyle(
                 fontSize: 12,
                 color: MomentoTheme.deepPlum.withValues(alpha: 0.6),
@@ -324,7 +327,7 @@ class _RoomSettingsScreenState extends State<RoomSettingsScreen> {
             ListTile(
               leading: const Icon(Icons.inbox_outlined,
                   color: MomentoTheme.coral),
-              title: const Text('Review pending posts'),
+              title: Text(l.roomSettingsReviewPending),
               trailing: const Icon(Icons.chevron_right),
               onTap: () => Navigator.push(
                 context,
@@ -343,12 +346,13 @@ class _RoomSettingsScreenState extends State<RoomSettingsScreen> {
   }
 
   Widget _buildJoinRequests(Room room) {
+    final l = AppLocalizations.of(context);
     return StreamBuilder<List<JoinRequest>>(
       stream: _rooms.watchJoinRequests(room.id),
       builder: (context, snap) {
         final requests = snap.data ?? [];
         if (requests.isEmpty) {
-          return _emptyCard('No pending requests');
+          return _emptyCard(l.roomSettingsNoPending);
         }
         return Column(
           children: requests.map((req) {
@@ -414,6 +418,7 @@ class _RoomSettingsScreenState extends State<RoomSettingsScreen> {
   }
 
   Widget _buildMembers(Room room, bool currentIsAdmin, String currentUid) {
+    final l = AppLocalizations.of(context);
     return FutureBuilder<List<AppUser>>(
       future: _firestore.getUsers(room.memberIds),
       builder: (context, snap) {
@@ -464,14 +469,14 @@ class _RoomSettingsScreenState extends State<RoomSettingsScreen> {
                           ),
                         ),
                         if (isMemberCreator)
-                          const Text('Creator',
-                              style: TextStyle(
+                          Text(AppLocalizations.of(context).roomSettingsCreator,
+                              style: const TextStyle(
                                 fontSize: 11,
                                 color: MomentoTheme.coral,
                                 fontWeight: FontWeight.w600,
                               ))
                         else if (isMemberAdmin)
-                          Text('Admin',
+                          Text(AppLocalizations.of(context).roomSettingsAdmin,
                               style: TextStyle(
                                 fontSize: 11,
                                 color: MomentoTheme.deepPlum
@@ -484,7 +489,7 @@ class _RoomSettingsScreenState extends State<RoomSettingsScreen> {
                     Padding(
                       padding: const EdgeInsets.only(right: 4),
                       child: Tooltip(
-                        message: 'Trusted — bypasses post approval',
+                        message: l.roomSettingsTrustedTag,
                         child: Icon(
                           Icons.verified,
                           size: 18,
@@ -500,28 +505,28 @@ class _RoomSettingsScreenState extends State<RoomSettingsScreen> {
                         final isTrusted = room.isTrusted(m.uid);
                         return [
                           if (!isMemberAdmin)
-                            const PopupMenuItem(
+                            PopupMenuItem(
                               value: 'promote',
-                              child: Text('Make admin'),
+                              child: Text(l.roomSettingsMakeAdmin),
                             )
                           else
-                            const PopupMenuItem(
+                            PopupMenuItem(
                               value: 'demote',
-                              child: Text('Remove admin'),
+                              child: Text(l.roomSettingsRemoveAdmin),
                             ),
                           if (!isMemberAdmin)
                             PopupMenuItem(
                               value: isTrusted ? 'untrust' : 'trust',
                               child: Text(
                                 isTrusted
-                                    ? 'Remove trusted status'
-                                    : 'Mark as trusted',
+                                    ? l.roomSettingsRemoveTrusted
+                                    : l.roomSettingsMarkTrusted,
                               ),
                             ),
-                          const PopupMenuItem(
+                          PopupMenuItem(
                             value: 'kick',
-                            child: Text('Remove from room',
-                                style: TextStyle(color: Colors.red)),
+                            child: Text(l.roomSettingsRemoveFromRoom,
+                                style: const TextStyle(color: Colors.red)),
                           ),
                         ];
                       },
@@ -569,21 +574,22 @@ class _RoomSettingsScreenState extends State<RoomSettingsScreen> {
             roomId: room.id, userId: member.uid, trusted: false);
         break;
       case 'kick':
+        final l = AppLocalizations.of(context);
         final confirmed = await showDialog<bool>(
           context: context,
           builder: (ctx) => AlertDialog(
-            title: const Text('Remove member?'),
+            title: Text(l.roomSettingsRemoveMemberTitle),
             content: Text(
-                '${member.displayName} will be removed from "${room.name}".'),
+                l.roomSettingsRemoveMemberBody(member.displayName, room.name)),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx, false),
-                child: const Text('Cancel'),
+                child: Text(l.commonCancel),
               ),
               TextButton(
                 onPressed: () => Navigator.pop(ctx, true),
                 style: TextButton.styleFrom(foregroundColor: Colors.red),
-                child: const Text('Remove'),
+                child: Text(l.commonRemove),
               ),
             ],
           ),
@@ -596,6 +602,7 @@ class _RoomSettingsScreenState extends State<RoomSettingsScreen> {
   }
 
   Future<void> _changePhoto(Room room) async {
+    final l = AppLocalizations.of(context);
     final picked = await _picker.pickImage(
       source: ImageSource.gallery,
       maxWidth: 600,
@@ -614,7 +621,7 @@ class _RoomSettingsScreenState extends State<RoomSettingsScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to update photo: $e')),
+          SnackBar(content: Text(l.roomSettingsFailedUpdatePhoto(e.toString()))),
         );
       }
     } finally {
@@ -623,25 +630,26 @@ class _RoomSettingsScreenState extends State<RoomSettingsScreen> {
   }
 
   Future<void> _renameRoom(Room room) async {
+    final l = AppLocalizations.of(context);
     final controller = TextEditingController(text: room.name);
     final newName = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Rename room'),
+        title: Text(l.roomSettingsRename),
         content: TextField(
           controller: controller,
           maxLength: 40,
           autofocus: true,
-          decoration: const InputDecoration(hintText: 'New name'),
+          decoration: InputDecoration(hintText: l.roomSettingsNewName),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: Text(l.commonCancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, controller.text.trim()),
-            child: const Text('Save'),
+            child: Text(l.commonSave),
           ),
         ],
       ),
@@ -652,20 +660,21 @@ class _RoomSettingsScreenState extends State<RoomSettingsScreen> {
   }
 
   Future<void> _confirmLeave(Room room) async {
+    final l = AppLocalizations.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Leave room?'),
-        content: Text('You will stop receiving momentos from "${room.name}".'),
+        title: Text(l.roomSettingsLeaveTitle),
+        content: Text(l.roomSettingsLeaveBody(room.name)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(l.commonCancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Leave'),
+            child: Text(l.roomSettingsLeave),
           ),
         ],
       ),
@@ -680,21 +689,21 @@ class _RoomSettingsScreenState extends State<RoomSettingsScreen> {
   }
 
   Future<void> _confirmDelete(Room room) async {
+    final l = AppLocalizations.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete room?'),
-        content: Text(
-            '"${room.name}" will be permanently deleted for all members. This cannot be undone.'),
+        title: Text(l.roomSettingsDeleteTitle),
+        content: Text(l.roomSettingsDeleteBody(room.name)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(l.commonCancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Delete'),
+            child: Text(l.commonDelete),
           ),
         ],
       ),

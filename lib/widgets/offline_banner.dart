@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
 import '../theme.dart';
 
 /// A small banner at the top of the home screen that appears when the device
@@ -39,6 +40,7 @@ class _OfflineBannerState extends State<OfflineBanner> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return AnimatedSize(
       duration: const Duration(milliseconds: 200),
       child: !_offline
@@ -47,14 +49,14 @@ class _OfflineBannerState extends State<OfflineBanner> {
               width: double.infinity,
               color: MomentoTheme.deepPlum,
               padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-              child: const Row(
+              child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.cloud_off, size: 16, color: Colors.white),
-                  SizedBox(width: 8),
+                  const Icon(Icons.cloud_off, size: 16, color: Colors.white),
+                  const SizedBox(width: 8),
                   Text(
-                    'You are offline',
-                    style: TextStyle(color: Colors.white, fontSize: 13),
+                    l.commonYouAreOffline,
+                    style: const TextStyle(color: Colors.white, fontSize: 13),
                   ),
                 ],
               ),

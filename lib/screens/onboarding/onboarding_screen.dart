@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
 import '../../services/auth_service.dart';
 import '../../theme.dart';
 
@@ -19,26 +20,23 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   int _index = 0;
   bool _finishing = false;
 
-  static const _pages = <_OnboardingPage>[
-    _OnboardingPage(
-      icon: Icons.celebration_outlined,
-      title: 'Welcome to Momento',
-      body:
-          'Share unfiltered moments with the people closest to you. No likes counts, no algorithms — just little glimpses of your day.',
-    ),
-    _OnboardingPage(
-      icon: Icons.meeting_room_outlined,
-      title: 'Create or join Rooms',
-      body:
-          'A Room is a private space for sharing photos. Start one for your family, your trip, your group of friends — and invite people with a 6-character code.',
-    ),
-    _OnboardingPage(
-      icon: Icons.timer_outlined,
-      title: 'Photos disappear in 6 hours',
-      body:
-          'Every photo expires automatically. Snap, share, and move on — no archive, no pressure.',
-    ),
-  ];
+  List<_OnboardingPage> _pagesFor(AppLocalizations l) => [
+        _OnboardingPage(
+          icon: Icons.celebration_outlined,
+          title: l.onboardingWelcomeTitle,
+          body: l.onboardingWelcomeBody,
+        ),
+        _OnboardingPage(
+          icon: Icons.meeting_room_outlined,
+          title: l.onboardingRoomsTitle,
+          body: l.onboardingRoomsBody,
+        ),
+        _OnboardingPage(
+          icon: Icons.timer_outlined,
+          title: l.onboardingExpireTitle,
+          body: l.onboardingExpireBody,
+        ),
+      ];
 
   @override
   void dispose() {
@@ -63,7 +61,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isLast = _index == _pages.length - 1;
+    final l = AppLocalizations.of(context);
+    final pages = _pagesFor(l);
+    final isLast = _index == pages.length - 1;
     return Scaffold(
       body: SafeArea(
         child: Column(
@@ -72,20 +72,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               alignment: Alignment.topRight,
               child: TextButton(
                 onPressed: _finishing ? null : _finish,
-                child: const Text('Skip'),
+                child: Text(l.onboardingSkip),
               ),
             ),
             Expanded(
               child: PageView.builder(
                 controller: _pageController,
-                itemCount: _pages.length,
+                itemCount: pages.length,
                 onPageChanged: (i) => setState(() => _index = i),
-                itemBuilder: (_, i) => _OnboardingCard(page: _pages[i]),
+                itemBuilder: (_, i) => _OnboardingCard(page: pages[i]),
               ),
             ),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(_pages.length, (i) {
+              children: List.generate(pages.length, (i) {
                 final selected = i == _index;
                 return AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
@@ -128,7 +128,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             color: Colors.white,
                           ),
                         )
-                      : Text(isLast ? 'Get Started' : 'Next'),
+                      : Text(isLast ? l.onboardingGetStarted : l.onboardingNext),
                 ),
               ),
             ),

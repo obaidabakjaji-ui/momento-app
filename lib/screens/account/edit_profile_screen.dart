@@ -4,6 +4,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
+import '../../l10n/app_localizations.dart';
 import '../../models/app_user.dart';
 import '../../theme.dart';
 
@@ -47,10 +48,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Future<void> _save() async {
+    final l = AppLocalizations.of(context);
     final newName = _nameController.text.trim();
     if (newName.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Name cannot be empty')),
+        SnackBar(content: Text(l.editProfileNameRequired)),
       );
       return;
     }
@@ -83,7 +85,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to save: $e')),
+          SnackBar(content: Text(l.editProfileFailedSave(e.toString()))),
         );
       }
     } finally {
@@ -93,12 +95,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final u = widget.user;
     final hasExistingPhoto = u.photoUrl != null;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Edit Profile'),
+        title: Text(l.editProfileTitle),
         actions: [
           TextButton(
             onPressed: _saving ? null : _save,
@@ -108,7 +111,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     width: 18,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Text('Save'),
+                : Text(l.commonSave),
           ),
         ],
       ),
@@ -161,7 +164,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Tap to change photo',
+              l.editProfileTapPhoto,
               style: TextStyle(
                 fontSize: 12,
                 color: MomentoTheme.deepPlum.withValues(alpha: 0.6),
@@ -172,8 +175,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               controller: _nameController,
               textCapitalization: TextCapitalization.words,
               maxLength: 40,
-              decoration: const InputDecoration(
-                labelText: 'Display name',
+              decoration: InputDecoration(
+                labelText: l.editProfileDisplayName,
               ),
             ),
             const SizedBox(height: 8),

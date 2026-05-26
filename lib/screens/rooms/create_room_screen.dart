@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../l10n/app_localizations.dart';
 import '../../services/auth_service.dart';
 import '../../services/room_service.dart';
 import '../../services/storage_service.dart';
@@ -47,7 +48,7 @@ class _CreateRoomScreenState extends State<CreateRoomScreen> {
   Future<void> _create() async {
     final name = _nameController.text.trim();
     if (name.isEmpty) {
-      _showError('Please enter a room name');
+      _showError(AppLocalizations.of(context).createRoomNameRequired);
       return;
     }
 
@@ -88,8 +89,9 @@ class _CreateRoomScreenState extends State<CreateRoomScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Create Room')),
+      appBar: AppBar(title: Text(l.createRoomTitle)),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -133,7 +135,7 @@ class _CreateRoomScreenState extends State<CreateRoomScreen> {
             const SizedBox(height: 4),
             Center(
               child: Text(
-                'Room photo (optional)',
+                l.createRoomPhotoLabel,
                 style: TextStyle(
                   fontSize: 12,
                   color: MomentoTheme.deepPlum.withValues(alpha: 0.6),
@@ -142,35 +144,35 @@ class _CreateRoomScreenState extends State<CreateRoomScreen> {
             ),
             const SizedBox(height: 24),
             Text(
-              'Room name',
+              l.createRoomNameLabel,
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 8),
             TextField(
               controller: _nameController,
               maxLength: 40,
-              decoration: const InputDecoration(
-                hintText: 'e.g. Family, Trip 2026, Best Friends',
+              decoration: InputDecoration(
+                hintText: l.createRoomNameHint,
               ),
             ),
             const SizedBox(height: 24),
             Text(
-              'Who can join?',
+              l.createRoomWhoCanJoin,
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 8),
             _VisibilityCard(
               icon: Icons.public,
-              title: 'Public',
-              subtitle: 'Anyone with the room code can join instantly',
+              title: l.createRoomPublic,
+              subtitle: l.createRoomPublicDescription,
               selected: _visibility == RoomVisibility.public,
               onTap: () => setState(() => _visibility = RoomVisibility.public),
             ),
             const SizedBox(height: 8),
             _VisibilityCard(
               icon: Icons.lock_outline,
-              title: 'Permission',
-              subtitle: 'New members must be approved by an admin',
+              title: l.createRoomPermission,
+              subtitle: l.createRoomPermissionDescription,
               selected: _visibility == RoomVisibility.permission,
               onTap: () =>
                   setState(() => _visibility = RoomVisibility.permission),
@@ -189,7 +191,7 @@ class _CreateRoomScreenState extends State<CreateRoomScreen> {
                           color: Colors.white,
                         ),
                       )
-                    : const Text('Create Room'),
+                    : Text(l.createRoomTitle),
               ),
             ),
           ],

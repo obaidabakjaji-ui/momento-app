@@ -1,6 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../l10n/app_localizations.dart';
 import '../../services/auth_service.dart';
 import '../../legal_urls.dart';
 import '../../theme.dart';
@@ -57,26 +58,25 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   Future<void> _promptPasswordReset() async {
+    final l = AppLocalizations.of(context);
     final controller =
         TextEditingController(text: _emailController.text.trim());
     final email = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Reset password'),
+        title: Text(l.authResetPasswordTitle),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Enter your email and we\'ll send you a link to reset your password.',
-            ),
+            Text(l.authResetPasswordDescription),
             const SizedBox(height: 16),
             TextField(
               controller: controller,
               autofocus: true,
               keyboardType: TextInputType.emailAddress,
-              decoration: const InputDecoration(
-                hintText: 'you@example.com',
+              decoration: InputDecoration(
+                hintText: l.authEmailPlaceholder,
               ),
             ),
           ],
@@ -84,11 +84,11 @@ class _AuthScreenState extends State<AuthScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: Text(l.commonCancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, controller.text.trim()),
-            child: const Text('Send'),
+            child: Text(l.authSend),
           ),
         ],
       ),
@@ -98,19 +98,20 @@ class _AuthScreenState extends State<AuthScreen> {
       await _auth.sendPasswordResetEmail(email);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Reset link sent to $email')),
+          SnackBar(content: Text(l.authResetLinkSent(email))),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed: $e')),
+          SnackBar(content: Text(l.commonFailedWithError(e.toString()))),
         );
       }
     }
   }
 
   Widget _buildLegalFooter(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final base = TextStyle(
       fontSize: 11,
       color: MomentoTheme.deepPlum.withValues(alpha: 0.6),
@@ -128,17 +129,17 @@ class _AuthScreenState extends State<AuthScreen> {
           children: [
             TextSpan(
               text: _isSignUp
-                  ? 'By creating an account you agree to our '
-                  : 'By signing in you agree to our ',
+                  ? l.authByCreatingYouAgree
+                  : l.authBySigningInYouAgree,
             ),
             TextSpan(
-              text: 'Terms',
+              text: l.authTerms,
               style: link,
               recognizer: _tap(kTermsOfServiceUrl),
             ),
-            const TextSpan(text: ' and '),
+            const TextSpan(text: ' · '),
             TextSpan(
-              text: 'Privacy Policy',
+              text: l.authPrivacyPolicy,
               style: link,
               recognizer: _tap(kPrivacyPolicyUrl),
             ),
@@ -178,6 +179,7 @@ class _AuthScreenState extends State<AuthScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return Scaffold(
       body: SafeArea(
         child: Center(
@@ -206,7 +208,7 @@ class _AuthScreenState extends State<AuthScreen> {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Momento',
+                    l.appName,
                     style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: MomentoTheme.deepPlum,
@@ -214,7 +216,8 @@ class _AuthScreenState extends State<AuthScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Every moment, shared beautifully',
+                    l.appTagline,
+                    textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: MomentoTheme.deepPlum.withValues(alpha: 0.6),
                         ),
@@ -225,13 +228,13 @@ class _AuthScreenState extends State<AuthScreen> {
                   if (_isSignUp) ...[
                     TextFormField(
                       controller: _nameController,
-                      decoration: const InputDecoration(
-                        hintText: 'Your name',
-                        prefixIcon: Icon(Icons.person_outline),
+                      decoration: InputDecoration(
+                        hintText: l.authYourName,
+                        prefixIcon: const Icon(Icons.person_outline),
                       ),
                       validator: (v) =>
                           _isSignUp && (v == null || v.trim().isEmpty)
-                              ? 'Enter your name'
+                              ? l.authYourNameHint
                               : null,
                     ),
                     const SizedBox(height: 12),
@@ -241,12 +244,12 @@ class _AuthScreenState extends State<AuthScreen> {
                   TextFormField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
-                    decoration: const InputDecoration(
-                      hintText: 'Email',
-                      prefixIcon: Icon(Icons.email_outlined),
+                    decoration: InputDecoration(
+                      hintText: l.authEmail,
+                      prefixIcon: const Icon(Icons.email_outlined),
                     ),
                     validator: (v) => v == null || !v.contains('@')
-                        ? 'Enter a valid email'
+                        ? l.authEmailHint
                         : null,
                   ),
                   const SizedBox(height: 12),
@@ -255,12 +258,12 @@ class _AuthScreenState extends State<AuthScreen> {
                   TextFormField(
                     controller: _passwordController,
                     obscureText: true,
-                    decoration: const InputDecoration(
-                      hintText: 'Password',
-                      prefixIcon: Icon(Icons.lock_outline),
+                    decoration: InputDecoration(
+                      hintText: l.authPassword,
+                      prefixIcon: const Icon(Icons.lock_outline),
                     ),
                     validator: (v) => v == null || v.length < 6
-                        ? 'Min 6 characters'
+                        ? l.authPasswordHint
                         : null,
                   ),
                   const SizedBox(height: 24),
@@ -277,14 +280,14 @@ class _AuthScreenState extends State<AuthScreen> {
                               color: Colors.white,
                             ),
                           )
-                        : Text(_isSignUp ? 'Create Account' : 'Sign In'),
+                        : Text(_isSignUp ? l.authCreateAccount : l.authSignIn),
                   ),
                   if (!_isSignUp) ...[
                     Align(
                       alignment: Alignment.centerRight,
                       child: TextButton(
                         onPressed: _loading ? null : _promptPasswordReset,
-                        child: const Text('Forgot password?'),
+                        child: Text(l.authForgotPassword),
                       ),
                     ),
                   ],
@@ -294,7 +297,7 @@ class _AuthScreenState extends State<AuthScreen> {
                   OutlinedButton.icon(
                     onPressed: _loading ? null : _handleGoogleSignIn,
                     icon: const Icon(Icons.g_mobiledata, size: 24),
-                    label: const Text('Continue with Google'),
+                    label: Text(l.authContinueWithGoogle),
                   ),
                   const SizedBox(height: 24),
 
@@ -302,9 +305,7 @@ class _AuthScreenState extends State<AuthScreen> {
                   TextButton(
                     onPressed: () => setState(() => _isSignUp = !_isSignUp),
                     child: Text(
-                      _isSignUp
-                          ? 'Already have an account? Sign in'
-                          : "Don't have an account? Sign up",
+                      _isSignUp ? l.authAlreadyHaveAccount : l.authNoAccount,
                     ),
                   ),
                   const SizedBox(height: 8),

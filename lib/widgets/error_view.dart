@@ -1,19 +1,21 @@
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
 import '../theme.dart';
 
 /// Friendly error placeholder used by stream/future builders.
 class ErrorView extends StatelessWidget {
-  final String message;
+  final String? message;
   final VoidCallback? onRetry;
 
   const ErrorView({
     super.key,
-    this.message = "Something went wrong",
+    this.message,
     this.onRetry,
   });
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -28,7 +30,7 @@ class ErrorView extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              message,
+              message ?? l.commonSomethingWentWrong,
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: MomentoTheme.deepPlum.withValues(alpha: 0.7),
@@ -40,7 +42,7 @@ class ErrorView extends StatelessWidget {
               OutlinedButton.icon(
                 onPressed: onRetry,
                 icon: const Icon(Icons.refresh),
-                label: const Text('Retry'),
+                label: Text(l.commonRetry),
               ),
             ],
           ],

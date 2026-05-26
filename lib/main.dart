@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
+import 'l10n/app_localizations.dart';
 import 'theme.dart';
 import 'services/auth_service.dart';
 import 'services/firestore_service.dart';
 import 'services/widget_service.dart';
+import 'services/locale_service.dart';
 import 'models/app_user.dart';
 import 'screens/auth/auth_screen.dart';
 import 'screens/auth/verify_email_screen.dart';
@@ -15,6 +17,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await WidgetService().initialize();
+  await LocaleService.instance.load();
   runApp(const MomentoApp());
 }
 
@@ -23,11 +26,19 @@ class MomentoApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Momento',
-      theme: MomentoTheme.light,
-      debugShowCheckedModeBanner: false,
-      home: const AuthGate(),
+    return AnimatedBuilder(
+      animation: LocaleService.instance,
+      builder: (context, _) {
+        return MaterialApp(
+          title: 'Momento',
+          theme: MomentoTheme.light,
+          debugShowCheckedModeBanner: false,
+          locale: LocaleService.instance.locale,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: const AuthGate(),
+        );
+      },
     );
   }
 }

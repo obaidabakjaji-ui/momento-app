@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
 import '../models/app_user.dart';
 import '../services/firestore_service.dart';
 import '../theme.dart';
@@ -52,7 +53,7 @@ class _LikedBySheet extends StatelessWidget {
                       size: 18, color: MomentoTheme.coral),
                   const SizedBox(width: 8),
                   Text(
-                    'Liked by ${userIds.length}',
+                    AppLocalizations.of(context).likedByCount(userIds.length),
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,

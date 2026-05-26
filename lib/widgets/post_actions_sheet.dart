@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
 import '../models/room_post.dart';
 import '../services/moderation_service.dart';
 import '../theme.dart';
@@ -12,6 +13,7 @@ Future<void> showPostActionsSheet({
 }) async {
   final isOwn = post.senderId == currentUserId;
   final moderation = ModerationService();
+  final l = AppLocalizations.of(context);
 
   await showModalBottomSheet<void>(
     context: context,
@@ -37,10 +39,10 @@ Future<void> showPostActionsSheet({
             if (!isOwn) ...[
               ListTile(
                 leading: const Icon(Icons.flag_outlined, color: Colors.red),
-                title: const Text('Report this post'),
+                title: Text(l.postActionsReportTitle),
                 onTap: () async {
                   Navigator.pop(sheetCtx);
-                  final reason = await _askReason(context, 'Why are you reporting this post?');
+                  final reason = await _askReason(context, l.postActionsReportPrompt);
                   if (reason == null) return;
                   await moderation.reportPost(
                     reporterId: currentUserId,
@@ -51,15 +53,15 @@ Future<void> showPostActionsSheet({
                   );
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Report submitted. Thanks.')),
+                      SnackBar(content: Text(l.postActionsReportSubmitted)),
                     );
                   }
                 },
               ),
               ListTile(
                 leading: const Icon(Icons.block, color: Colors.red),
-                title: Text('Block ${post.senderName}'),
-                subtitle: const Text("You won't see their posts in any room"),
+                title: Text(l.postActionsBlockUser(post.senderName)),
+                subtitle: Text(l.postActionsBlockDescription),
                 onTap: () async {
                   Navigator.pop(sheetCtx);
                   final ok = await _confirmBlock(context, post.senderName);
@@ -70,7 +72,7 @@ Future<void> showPostActionsSheet({
                   );
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('${post.senderName} blocked.')),
+                      SnackBar(content: Text(l.postActionsUserBlocked(post.senderName))),
                     );
                   }
                 },
@@ -81,8 +83,8 @@ Future<void> showPostActionsSheet({
                   Icons.info_outline,
                   color: MomentoTheme.deepPlum.withValues(alpha: 0.6),
                 ),
-                title: const Text('This is your own post'),
-                subtitle: const Text('No moderation actions available'),
+                title: Text(l.postActionsOwnPost),
+                subtitle: Text(l.postActionsNoActions),
               ),
             ],
             const SizedBox(height: 8),
@@ -95,6 +97,7 @@ Future<void> showPostActionsSheet({
 
 Future<String?> _askReason(BuildContext context, String prompt) async {
   final controller = TextEditingController();
+  final l = AppLocalizations.of(context);
   return showDialog<String>(
     context: context,
     builder: (ctx) => AlertDialog(
@@ -103,19 +106,19 @@ Future<String?> _askReason(BuildContext context, String prompt) async {
         controller: controller,
         autofocus: true,
         maxLength: 200,
-        decoration: const InputDecoration(
-          hintText: 'Optional — describe what is wrong',
+        decoration: InputDecoration(
+          hintText: l.postActionsReportPlaceholder,
         ),
         maxLines: 3,
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(ctx),
-          child: const Text('Cancel'),
+          child: Text(l.commonCancel),
         ),
         TextButton(
           onPressed: () => Navigator.pop(ctx, controller.text.trim()),
-          child: const Text('Submit'),
+          child: Text(l.commonSubmit),
         ),
       ],
     ),
@@ -123,22 +126,21 @@ Future<String?> _askReason(BuildContext context, String prompt) async {
 }
 
 Future<bool?> _confirmBlock(BuildContext context, String name) async {
+  final l = AppLocalizations.of(context);
   return showDialog<bool>(
     context: context,
     builder: (ctx) => AlertDialog(
-      title: Text('Block $name?'),
-      content: Text(
-        "You won't see $name's posts in any room. They won't be notified.",
-      ),
+      title: Text(l.postActionsBlockTitle(name)),
+      content: Text(l.postActionsBlockBody(name)),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(ctx, false),
-          child: const Text('Cancel'),
+          child: Text(l.commonCancel),
         ),
         TextButton(
           onPressed: () => Navigator.pop(ctx, true),
           style: TextButton.styleFrom(foregroundColor: Colors.red),
-          child: const Text('Block'),
+          child: Text(l.postActionsBlock),
         ),
       ],
     ),

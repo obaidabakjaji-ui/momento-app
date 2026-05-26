@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import '../../l10n/app_localizations.dart';
 import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
 import '../../services/room_service.dart';
@@ -36,6 +37,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final uid = _auth.currentUser!.uid;
 
     return StreamBuilder<Room?>(
@@ -53,7 +55,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
             actions: [
               IconButton(
                 icon: const Icon(Icons.settings_outlined),
-                tooltip: isAdmin ? 'Room settings' : 'Members',
+                tooltip: isAdmin ? l.roomDetailSettings : l.roomDetailMembers,
                 onPressed: () => Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -72,7 +74,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                 stream: _rooms.watchRoomPosts(room.id),
                 builder: (context, snap) {
                   if (snap.hasError) {
-                    return const ErrorView(message: "Couldn't load posts.");
+                    return ErrorView(message: l.roomDetailCouldNotLoadPosts);
                   }
                   if (snap.connectionState == ConnectionState.waiting) {
                     return const ShimmerList(itemHeight: 120);
@@ -97,6 +99,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
   }
 
   Widget _buildEmptyState() {
+    final l = AppLocalizations.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -110,14 +113,14 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              'No momentos in this room yet',
+              l.roomDetailEmptyTitle,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     color: MomentoTheme.deepPlum,
                   ),
             ),
             const SizedBox(height: 8),
             Text(
-              'Take a photo from the camera to be the first.',
+              l.roomDetailEmptyBody,
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: MomentoTheme.deepPlum.withValues(alpha: 0.6),
@@ -137,6 +140,7 @@ class _PostCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final remaining = post.expiresAt.difference(DateTime.now());
     final hours = remaining.inHours;
     final minutes = remaining.inMinutes % 60;
@@ -231,8 +235,8 @@ class _PostCard extends StatelessWidget {
                     const SizedBox(width: 6),
                     Text(
                       remaining.isNegative
-                          ? 'Expired'
-                          : '${hours}h ${minutes}m remaining',
+                          ? l.homeExpired
+                          : l.homeTimeRemaining(hours, minutes),
                       style: const TextStyle(
                         color: MomentoTheme.coral,
                         fontWeight: FontWeight.w600,

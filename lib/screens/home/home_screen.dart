@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import '../../l10n/app_localizations.dart';
 import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
 import '../../services/room_service.dart';
@@ -31,6 +32,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final pages = const [
       _FeedTab(),
       RoomsScreen(),
@@ -42,21 +44,21 @@ class _HomeScreenState extends State<HomeScreen> {
       bottomNavigationBar: NavigationBar(
         selectedIndex: _tabIndex,
         onDestinationSelected: (i) => setState(() => _tabIndex = i),
-        destinations: const [
+        destinations: [
           NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home),
-            label: 'Feed',
+            icon: const Icon(Icons.home_outlined),
+            selectedIcon: const Icon(Icons.home),
+            label: l.homeFeed,
           ),
           NavigationDestination(
-            icon: Icon(Icons.meeting_room_outlined),
-            selectedIcon: Icon(Icons.meeting_room),
-            label: 'Rooms',
+            icon: const Icon(Icons.meeting_room_outlined),
+            selectedIcon: const Icon(Icons.meeting_room),
+            label: l.homeRooms,
           ),
           NavigationDestination(
-            icon: Icon(Icons.person_outline),
-            selectedIcon: Icon(Icons.person),
-            label: 'Account',
+            icon: const Icon(Icons.person_outline),
+            selectedIcon: const Icon(Icons.person),
+            label: l.homeAccount,
           ),
         ],
       ),
@@ -65,7 +67,7 @@ class _HomeScreenState extends State<HomeScreen> {
               backgroundColor: MomentoTheme.coral,
               foregroundColor: Colors.white,
               icon: const Icon(Icons.camera_alt),
-              label: const Text('New Momento'),
+              label: Text(l.homeNewMomento),
               onPressed: () => Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const CameraScreen()),
@@ -131,6 +133,7 @@ class _FeedTabState extends State<_FeedTab> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final uid = _auth.currentUser!.uid;
 
     return StreamBuilder<AppUser?>(
@@ -138,23 +141,23 @@ class _FeedTabState extends State<_FeedTab> {
       builder: (context, userSnap) {
         if (userSnap.hasError) {
           return Scaffold(
-            appBar: AppBar(title: const Text('Momento')),
-            body: const ErrorView(message: "Couldn't load your account."),
+            appBar: AppBar(title: Text(l.appName)),
+            body: ErrorView(message: l.homeCouldNotLoadAccount),
           );
         }
         final user = userSnap.data;
         if (user == null) {
           return Scaffold(
-            appBar: AppBar(title: const Text('Momento')),
+            appBar: AppBar(title: Text(l.appName)),
             body: const ShimmerList(itemHeight: 120),
           );
         }
 
         return Scaffold(
           appBar: AppBar(
-            title: const Text(
-              'Momento',
-              style: TextStyle(fontWeight: FontWeight.bold),
+            title: Text(
+              l.appName,
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
           ),
           body: Column(
@@ -189,7 +192,7 @@ class _FeedTabState extends State<_FeedTab> {
       future: _rooms.getRooms(sourceRoomIds),
       builder: (context, roomsSnap) {
         if (roomsSnap.hasError) {
-          return const ErrorView(message: "Couldn't load your rooms.");
+          return ErrorView(message: AppLocalizations.of(context).homeCouldNotLoadRooms);
         }
         if (!roomsSnap.hasData) {
           return const ShimmerList(itemHeight: 120);
@@ -207,7 +210,7 @@ class _FeedTabState extends State<_FeedTab> {
           stream: combined,
           builder: (context, snap) {
             if (snap.hasError) {
-              return const ErrorView(message: "Couldn't load posts.");
+              return ErrorView(message: AppLocalizations.of(context).homeCouldNotLoadPosts);
             }
             if (!snap.hasData) {
               return const ShimmerList(itemHeight: 120);
@@ -270,78 +273,100 @@ class _FeedTabState extends State<_FeedTab> {
   }
 
   Widget _buildNoRoomsState() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 100,
-              height: 100,
-              decoration: BoxDecoration(
-                color: MomentoTheme.softPink.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(30),
-              ),
-              child: Icon(
-                Icons.meeting_room_outlined,
-                size: 50,
-                color: MomentoTheme.coral.withValues(alpha: 0.7),
-              ),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'No rooms yet',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: MomentoTheme.deepPlum,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          physics: const NeverScrollableScrollPhysics(),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 48),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 100,
+                    height: 100,
+                    decoration: BoxDecoration(
+                      color: MomentoTheme.softPink.withValues(alpha: 0.3),
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    child: Icon(
+                      Icons.meeting_room_outlined,
+                      size: 50,
+                      color: MomentoTheme.coral.withValues(alpha: 0.7),
+                    ),
                   ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Open the Rooms tab to create or join one.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: MomentoTheme.deepPlum.withValues(alpha: 0.6),
+                  const SizedBox(height: 24),
+                  Text(
+                    AppLocalizations.of(context).homeNoRoomsTitle,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: MomentoTheme.deepPlum,
+                        ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    AppLocalizations.of(context).homeNoRoomsHomeBody,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: MomentoTheme.deepPlum.withValues(alpha: 0.6),
+                    ),
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
   Widget _buildEmptyFeed() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.photo_camera_outlined,
-              size: 80,
-              color: MomentoTheme.deepPlum.withValues(alpha: 0.2),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'No momentos yet',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: MomentoTheme.deepPlum,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          physics: const NeverScrollableScrollPhysics(),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 48),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.photo_camera_outlined,
+                    size: 80,
+                    color: MomentoTheme.deepPlum.withValues(alpha: 0.2),
                   ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Take a photo and share it with your rooms!',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: MomentoTheme.deepPlum.withValues(alpha: 0.6),
+                  const SizedBox(height: 24),
+                  Text(
+                    AppLocalizations.of(context).homeNoMomentosTitle,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: MomentoTheme.deepPlum,
+                        ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    AppLocalizations.of(context).homeNoMomentosBody,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: MomentoTheme.deepPlum.withValues(alpha: 0.6),
+                    ),
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }
@@ -475,8 +500,9 @@ class _PostCard extends StatelessWidget {
                     const SizedBox(width: 6),
                     Text(
                       remaining.isNegative
-                          ? 'Expired'
-                          : '${hours}h ${minutes}m remaining',
+                          ? AppLocalizations.of(context).homeExpired
+                          : AppLocalizations.of(context)
+                              .homeTimeRemaining(hours, minutes),
                       style: const TextStyle(
                         color: MomentoTheme.coral,
                         fontWeight: FontWeight.w600,

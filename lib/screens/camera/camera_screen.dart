@@ -5,6 +5,7 @@ import 'package:video_compress/video_compress.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 import 'package:video_player/video_player.dart';
 import 'package:path_provider/path_provider.dart';
+import '../../l10n/app_localizations.dart';
 import '../../services/auth_service.dart';
 import '../../services/storage_service.dart';
 import '../../services/room_service.dart';
@@ -145,6 +146,7 @@ class _CameraScreenState extends State<CameraScreen> {
   /// from the middle of the clip.
   Future<void> _processPickedVideo(File rawVideo) async {
     if (!mounted) return;
+    final l = AppLocalizations.of(context);
     _clearMedia();
     setState(() => _processingVideo = true);
     try {
@@ -157,7 +159,7 @@ class _CameraScreenState extends State<CameraScreen> {
         includeAudio: false,
       );
       if (compressed == null || compressed.file == null) {
-        throw Exception('Could not process video.');
+        throw Exception(l.cameraCouldNotProcessVideo);
       }
 
       // Hard-cap at 6s in case the source was longer than image_picker honored
@@ -165,7 +167,7 @@ class _CameraScreenState extends State<CameraScreen> {
       final durationMs = compressed.duration?.toInt() ?? 0;
       if (durationMs > (_maxVideoSeconds + 1) * 1000) {
         await VideoCompress.deleteAllCache();
-        throw Exception('Video must be 6 seconds or shorter.');
+        throw Exception(l.cameraVideoTooLong);
       }
 
       // Poster from a frame near the middle (more interesting than the very
@@ -180,7 +182,7 @@ class _CameraScreenState extends State<CameraScreen> {
         maxWidth: 1080,
       );
       if (posterBytes == null) {
-        throw Exception('Could not generate poster frame.');
+        throw Exception(l.cameraCouldNotPoster);
       }
       final posterFile = File(
           '${posterDir.path}/momento-poster-${DateTime.now().millisecondsSinceEpoch}.jpg');
@@ -222,10 +224,11 @@ class _CameraScreenState extends State<CameraScreen> {
 
   Future<void> _send() async {
     if (!_hasMedia || _user == null) return;
+    final l = AppLocalizations.of(context);
     final targets = _resolveTargetRoomIds();
     if (targets.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Pick at least one room')),
+        SnackBar(content: Text(l.cameraPickAtLeastOne)),
       );
       return;
     }
@@ -266,14 +269,11 @@ class _CameraScreenState extends State<CameraScreen> {
       if (mounted) {
         String message;
         if (result.pending == 0) {
-          message =
-              'Posted to ${result.live} room${result.live == 1 ? '' : 's'}!';
+          message = l.cameraPostedTo(result.live);
         } else if (result.live == 0) {
-          message =
-              '${result.pending} post${result.pending == 1 ? '' : 's'} pending admin approval.';
+          message = l.cameraPendingApproval(result.pending);
         } else {
-          message =
-              '${result.live} live, ${result.pending} pending admin approval.';
+          message = l.cameraLiveAndPending(result.live, result.pending);
         }
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(message)),
@@ -283,7 +283,7 @@ class _CameraScreenState extends State<CameraScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to send: $e')),
+          SnackBar(content: Text(l.cameraFailedToSend(e.toString()))),
         );
       }
     } finally {
@@ -293,18 +293,19 @@ class _CameraScreenState extends State<CameraScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     if (_loading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     if (_user == null || _user!.roomIds.isEmpty) {
       return Scaffold(
-        appBar: AppBar(title: const Text('New Momento')),
+        appBar: AppBar(title: Text(l.cameraTitle)),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(32),
             child: Text(
-              'Join or create a room first to post momentos.',
+              l.cameraNoRooms,
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: MomentoTheme.deepPlum.withValues(alpha: 0.6),
@@ -316,7 +317,7 @@ class _CameraScreenState extends State<CameraScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('New Momento')),
+      appBar: AppBar(title: Text(l.cameraTitle)),
       body: Column(
         children: [
           Expanded(child: _buildPreviewArea()),
@@ -332,14 +333,15 @@ class _CameraScreenState extends State<CameraScreen> {
   }
 
   Widget _buildPreviewArea() {
+    final l = AppLocalizations.of(context);
     if (_processingVideo) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 16),
-            Text('Processing video…'),
+            const CircularProgressIndicator(),
+            const SizedBox(height: 16),
+            Text(l.cameraProcessingVideo),
           ],
         ),
       );
@@ -378,14 +380,14 @@ class _CameraScreenState extends State<CameraScreen> {
                       color: Colors.black.withValues(alpha: 0.55),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: const Row(
+                    child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.videocam, size: 12, color: Colors.white),
-                        SizedBox(width: 4),
+                        const Icon(Icons.videocam, size: 12, color: Colors.white),
+                        const SizedBox(width: 4),
                         Text(
-                          'Muted',
-                          style: TextStyle(
+                          l.cameraMuted,
+                          style: const TextStyle(
                               color: Colors.white,
                               fontSize: 11,
                               fontWeight: FontWeight.w600),
@@ -411,7 +413,7 @@ class _CameraScreenState extends State<CameraScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            'Capture a photo or 6-second clip',
+            l.cameraCaptureHint,
             style: TextStyle(
               color: MomentoTheme.deepPlum.withValues(alpha: 0.5),
               fontSize: 16,
@@ -423,6 +425,7 @@ class _CameraScreenState extends State<CameraScreen> {
   }
 
   Widget _buildPickerButtons() {
+    final l = AppLocalizations.of(context);
     return Column(
       children: [
         Row(
@@ -431,7 +434,7 @@ class _CameraScreenState extends State<CameraScreen> {
               child: ElevatedButton.icon(
                 onPressed: _processingVideo ? null : _takePhoto,
                 icon: const Icon(Icons.camera_alt),
-                label: const Text('Photo'),
+                label: Text(l.cameraPhoto),
               ),
             ),
             const SizedBox(width: 12),
@@ -439,7 +442,7 @@ class _CameraScreenState extends State<CameraScreen> {
               child: ElevatedButton.icon(
                 onPressed: _processingVideo ? null : _recordVideo,
                 icon: const Icon(Icons.videocam),
-                label: const Text('Video'),
+                label: Text(l.cameraVideo),
               ),
             ),
           ],
@@ -451,7 +454,7 @@ class _CameraScreenState extends State<CameraScreen> {
               child: OutlinedButton.icon(
                 onPressed: _processingVideo ? null : _pickFromGallery,
                 icon: const Icon(Icons.photo_library),
-                label: const Text('Photo from gallery'),
+                label: Text(l.cameraPhotoFromGallery),
               ),
             ),
             const SizedBox(width: 12),
@@ -459,7 +462,7 @@ class _CameraScreenState extends State<CameraScreen> {
               child: OutlinedButton.icon(
                 onPressed: _processingVideo ? null : _pickVideoFromGallery,
                 icon: const Icon(Icons.video_library),
-                label: const Text('Video from gallery'),
+                label: Text(l.cameraVideoFromGallery),
               ),
             ),
           ],
@@ -469,6 +472,7 @@ class _CameraScreenState extends State<CameraScreen> {
   }
 
   Widget _buildSendButtons() {
+    final l = AppLocalizations.of(context);
     return Row(
       children: [
         Expanded(
@@ -478,7 +482,7 @@ class _CameraScreenState extends State<CameraScreen> {
                 : () => setState(() {
                       _clearMedia();
                     }),
-            child: const Text('Retake'),
+            child: Text(l.cameraRetake),
           ),
         ),
         const SizedBox(width: 12),
@@ -495,7 +499,7 @@ class _CameraScreenState extends State<CameraScreen> {
                       color: Colors.white,
                     ),
                   )
-                : Text(_isVideo ? 'Post Clip' : 'Post Momento'),
+                : Text(_isVideo ? l.cameraPostClip : l.cameraPostMomento),
           ),
         ),
       ],
@@ -503,6 +507,7 @@ class _CameraScreenState extends State<CameraScreen> {
   }
 
   Widget _buildCaptionField() {
+    final l = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
       child: TextField(
@@ -513,7 +518,7 @@ class _CameraScreenState extends State<CameraScreen> {
         textInputAction: TextInputAction.done,
         style: const TextStyle(color: MomentoTheme.deepPlum),
         decoration: InputDecoration(
-          hintText: 'Add a caption (optional)',
+          hintText: l.cameraCaptionHint,
           filled: true,
           fillColor: Colors.white,
           counterText: '',
@@ -529,6 +534,7 @@ class _CameraScreenState extends State<CameraScreen> {
   }
 
   Widget _buildTargetPicker() {
+    final l = AppLocalizations.of(context);
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(12),
@@ -540,7 +546,7 @@ class _CameraScreenState extends State<CameraScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Post to',
+            l.cameraPostTo,
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
@@ -553,17 +559,17 @@ class _CameraScreenState extends State<CameraScreen> {
             children: [
               ChoiceChip(
                 label: Text(
-                    'Active rooms (${_user!.activeRoomIds.length})'),
+                    l.cameraActiveRoomsCount(_user!.activeRoomIds.length)),
                 selected: _target == _Target.active,
                 onSelected: (_) => setState(() => _target = _Target.active),
               ),
               ChoiceChip(
-                label: Text('All rooms (${_user!.roomIds.length})'),
+                label: Text(l.cameraAllRoomsCount(_user!.roomIds.length)),
                 selected: _target == _Target.all,
                 onSelected: (_) => setState(() => _target = _Target.all),
               ),
               ChoiceChip(
-                label: const Text('Pick…'),
+                label: Text(l.cameraPickRooms),
                 selected: _target == _Target.custom,
                 onSelected: (_) => setState(() => _target = _Target.custom),
               ),

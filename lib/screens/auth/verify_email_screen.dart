@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../l10n/app_localizations.dart';
 import '../../services/auth_service.dart';
 import '../../theme.dart';
 
@@ -44,7 +45,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
     try {
       await _auth.requestEmailCode();
       if (!mounted) return;
-      setState(() => _info = 'Code sent — check your inbox.');
+      setState(() => _info = AppLocalizations.of(context).verifyCodeSent);
       _startResendCooldown(30);
     } on EmailCodeException catch (e) {
       if (!mounted) return;
@@ -58,8 +59,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
       }
     } catch (_) {
       if (!mounted) return;
-      setState(() => _error =
-          'Could not send a code. Tap resend to try again.');
+      setState(() => _error = AppLocalizations.of(context).verifyCodeFailed);
     }
   }
 
@@ -94,7 +94,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
     try {
       await _auth.requestEmailCode();
       if (!mounted) return;
-      setState(() => _info = 'New code sent — check your inbox.');
+      setState(() => _info = AppLocalizations.of(context).verifyCodeSentNew);
       _startResendCooldown(30);
     } on EmailCodeException catch (e) {
       if (!mounted) return;
@@ -106,7 +106,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
       }
     } catch (_) {
       if (!mounted) return;
-      setState(() => _error = 'Could not send a new code. Try again.');
+      setState(() => _error = AppLocalizations.of(context).verifyCodeFailedNew);
     }
   }
 
@@ -131,7 +131,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _error = 'Something went wrong. Try again.';
+        _error = AppLocalizations.of(context).verifySomethingWrong;
         _verifying = false;
       });
     }
@@ -139,7 +139,8 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final email = _auth.currentUser?.email ?? 'your email';
+    final l = AppLocalizations.of(context);
+    final email = _auth.currentUser?.email ?? '—';
     return Scaffold(
       backgroundColor: MomentoTheme.seashell,
       body: SafeArea(
@@ -150,13 +151,13 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
             children: [
               IconButton(
                 icon: const Icon(Icons.logout),
-                tooltip: 'Sign out',
+                tooltip: l.authSignOut,
                 onPressed: () => _auth.signOut(),
               ),
               const SizedBox(height: 24),
-              const Text(
-                'Check your email',
-                style: TextStyle(
+              Text(
+                l.verifyTitle,
+                style: const TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.w700,
                   color: MomentoTheme.deepPlum,
@@ -164,7 +165,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
               ),
               const SizedBox(height: 10),
               Text(
-                'We sent a 6-digit code to $email. Enter it below to confirm your account.',
+                l.verifyDescription(email),
                 style: TextStyle(
                   fontSize: 15,
                   color: MomentoTheme.deepPlum.withValues(alpha: 0.7),
@@ -202,8 +203,8 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                       : _resend,
                   child: Text(
                     _resendSecondsLeft > 0
-                        ? 'Resend code in ${_resendSecondsLeft}s'
-                        : 'Resend code',
+                        ? l.verifyResendIn(_resendSecondsLeft)
+                        : l.verifyResend,
                     style: const TextStyle(
                       fontWeight: FontWeight.w600,
                     ),

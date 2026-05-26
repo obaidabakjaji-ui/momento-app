@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
 import '../../services/auth_service.dart';
 import '../../services/room_service.dart';
 import '../../models/room.dart';
@@ -97,7 +98,7 @@ class _JoinRoomScreenState extends State<JoinRoomScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Request sent. Waiting for an admin of "${room.name}" to approve.',
+              AppLocalizations.of(context).joinRoomRequestSent(room.name),
             ),
           ),
         );
@@ -111,9 +112,10 @@ class _JoinRoomScreenState extends State<JoinRoomScreen> {
   }
 
   Future<void> _joinByCode() async {
+    final l = AppLocalizations.of(context);
     final code = _codeController.text.trim().toUpperCase();
     if (code.length != 6) {
-      _showError('Room codes are 6 characters');
+      _showError(l.joinRoomCodeMustBeSix);
       return;
     }
 
@@ -121,7 +123,7 @@ class _JoinRoomScreenState extends State<JoinRoomScreen> {
     try {
       final room = await _rooms.findRoomByCode(code);
       if (room == null) {
-        _showError('No room found with that code');
+        _showError(l.joinRoomNotFound);
         return;
       }
       await _joinRoom(room);
@@ -140,8 +142,9 @@ class _JoinRoomScreenState extends State<JoinRoomScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Join Room')),
+      appBar: AppBar(title: Text(l.joinRoomTitle)),
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [
@@ -155,7 +158,7 @@ class _JoinRoomScreenState extends State<JoinRoomScreen> {
             child: Column(
               children: [
                 Text(
-                  'Have a code?',
+                  l.joinRoomHaveCode,
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const SizedBox(height: 12),
@@ -169,9 +172,9 @@ class _JoinRoomScreenState extends State<JoinRoomScreen> {
                     letterSpacing: 6,
                   ),
                   maxLength: 6,
-                  decoration: const InputDecoration(
-                    hintText: 'A7BX92',
-                    hintStyle: TextStyle(letterSpacing: 6),
+                  decoration: InputDecoration(
+                    hintText: l.joinRoomCodePlaceholder,
+                    hintStyle: const TextStyle(letterSpacing: 6),
                   ),
                 ),
                 SizedBox(
@@ -187,7 +190,7 @@ class _JoinRoomScreenState extends State<JoinRoomScreen> {
                               color: Colors.white,
                             ),
                           )
-                        : const Text('Join by code'),
+                        : Text(l.roomsJoinByCode),
                   ),
                 ),
               ],
@@ -197,7 +200,7 @@ class _JoinRoomScreenState extends State<JoinRoomScreen> {
 
           // Search by name
           Text(
-            'Or search public rooms',
+            l.joinRoomSearch,
             style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: 8),
@@ -206,7 +209,7 @@ class _JoinRoomScreenState extends State<JoinRoomScreen> {
             onChanged: _onSearchChanged,
             decoration: InputDecoration(
               prefixIcon: const Icon(Icons.search),
-              hintText: 'Room name…',
+              hintText: l.joinRoomSearchHint,
               filled: true,
               fillColor: Colors.white,
               border: OutlineInputBorder(
@@ -226,7 +229,7 @@ class _JoinRoomScreenState extends State<JoinRoomScreen> {
             Padding(
               padding: const EdgeInsets.all(16),
               child: Text(
-                'No public rooms matched.',
+                l.joinRoomNoResults,
                 style: TextStyle(
                   color: MomentoTheme.deepPlum.withValues(alpha: 0.6),
                 ),
@@ -236,7 +239,7 @@ class _JoinRoomScreenState extends State<JoinRoomScreen> {
             ..._searchResults.map(_buildResultTile),
           const SizedBox(height: 24),
           Text(
-            'Permission-based rooms can only be joined using their code.',
+            l.joinRoomPermissionOnly,
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 12,
@@ -278,7 +281,7 @@ class _JoinRoomScreenState extends State<JoinRoomScreen> {
           ),
         ),
         subtitle: Text(
-          '${room.memberCount} member${room.memberCount == 1 ? '' : 's'}',
+          AppLocalizations.of(context).joinRoomMembers(room.memberCount),
           style: TextStyle(
             fontSize: 12,
             color: MomentoTheme.deepPlum.withValues(alpha: 0.6),
@@ -290,7 +293,7 @@ class _JoinRoomScreenState extends State<JoinRoomScreen> {
             backgroundColor: MomentoTheme.coral,
             visualDensity: VisualDensity.compact,
           ),
-          child: const Text('Join'),
+          child: Text(AppLocalizations.of(context).joinRoomJoin),
         ),
       ),
     );

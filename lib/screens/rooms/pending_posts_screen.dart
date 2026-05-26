@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
 import '../../services/room_service.dart';
 import '../../models/room_post.dart';
 import '../../theme.dart';
@@ -17,9 +18,10 @@ class PendingPostsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final service = RoomService();
     return Scaffold(
-      appBar: AppBar(title: Text('Pending — $roomName')),
+      appBar: AppBar(title: Text(l.pendingPostsTitle(roomName))),
       body: StreamBuilder<List<RoomPost>>(
         stream: service.watchPendingPosts(roomId),
         builder: (context, snap) {
@@ -32,7 +34,7 @@ class PendingPostsScreen extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.all(32),
                 child: Text(
-                  'Nothing waiting for approval.',
+                  l.pendingPostsEmpty,
                   style: TextStyle(
                     color: MomentoTheme.deepPlum.withValues(alpha: 0.6),
                   ),
@@ -57,6 +59,7 @@ class _PendingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final service = RoomService();
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -131,7 +134,7 @@ class _PendingCard extends StatelessWidget {
                       postId: post.id,
                     ),
                     icon: const Icon(Icons.close),
-                    label: const Text('Reject'),
+                    label: Text(l.pendingPostsReject),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: Colors.red,
                       side: const BorderSide(color: Colors.red),
@@ -146,7 +149,7 @@ class _PendingCard extends StatelessWidget {
                       postId: post.id,
                     ),
                     icon: const Icon(Icons.check),
-                    label: const Text('Approve'),
+                    label: Text(l.pendingPostsApprove),
                   ),
                 ),
               ],

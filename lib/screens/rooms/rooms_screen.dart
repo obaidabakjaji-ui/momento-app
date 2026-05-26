@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
 import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
 import '../../services/room_service.dart';
@@ -25,16 +26,17 @@ class _RoomsScreenState extends State<RoomsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final uid = _auth.currentUser!.uid;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My Rooms',
-            style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(l.roomsMyRooms,
+            style: const TextStyle(fontWeight: FontWeight.bold)),
         actions: [
           IconButton(
             icon: const Icon(Icons.search),
-            tooltip: 'Join by code',
+            tooltip: l.roomsJoinByCode,
             onPressed: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const JoinRoomScreen()),
@@ -46,7 +48,7 @@ class _RoomsScreenState extends State<RoomsScreen> {
         stream: _firestore.watchUser(uid),
         builder: (context, userSnap) {
           if (userSnap.hasError) {
-            return const ErrorView(message: "Couldn't load your account.");
+            return ErrorView(message: l.homeCouldNotLoadAccount);
           }
           final user = userSnap.data;
           if (user == null) {
@@ -66,7 +68,7 @@ class _RoomsScreenState extends State<RoomsScreen> {
               future: _rooms.getRooms(user.roomIds),
               builder: (context, snap) {
                 if (snap.hasError) {
-                  return const ErrorView(message: "Couldn't load your rooms.");
+                  return ErrorView(message: AppLocalizations.of(context).homeCouldNotLoadRooms);
                 }
                 if (!snap.hasData) {
                   return const ShimmerList(itemHeight: 84);
@@ -121,7 +123,7 @@ class _RoomsScreenState extends State<RoomsScreen> {
         backgroundColor: MomentoTheme.coral,
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add),
-        label: const Text('Create Room'),
+        label: Text(l.roomsCreateRoom),
         onPressed: () => Navigator.push(
           context,
           MaterialPageRoute(builder: (_) => const CreateRoomScreen()),
@@ -131,67 +133,81 @@ class _RoomsScreenState extends State<RoomsScreen> {
   }
 
   Widget _buildEmptyState(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 100,
-              height: 100,
-              decoration: BoxDecoration(
-                color: MomentoTheme.softPink.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(30),
-              ),
-              child: Icon(
-                Icons.meeting_room_outlined,
-                size: 50,
-                color: MomentoTheme.coral.withValues(alpha: 0.7),
-              ),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'No rooms yet',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: MomentoTheme.deepPlum,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          physics: const NeverScrollableScrollPhysics(),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 48),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 100,
+                    height: 100,
+                    decoration: BoxDecoration(
+                      color: MomentoTheme.softPink.withValues(alpha: 0.3),
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    child: Icon(
+                      Icons.meeting_room_outlined,
+                      size: 50,
+                      color: MomentoTheme.coral.withValues(alpha: 0.7),
+                    ),
                   ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Create a new room or join one with a code to start sharing momentos.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: MomentoTheme.deepPlum.withValues(alpha: 0.6),
+                  const SizedBox(height: 24),
+                  Text(
+                    AppLocalizations.of(context).roomsEmptyTitle,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: MomentoTheme.deepPlum,
+                        ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    AppLocalizations.of(context).roomsEmptyBody,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: MomentoTheme.deepPlum.withValues(alpha: 0.6),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Wrap(
+                    alignment: WrapAlignment.center,
+                    spacing: 12,
+                    runSpacing: 12,
+                    children: [
+                      OutlinedButton.icon(
+                        onPressed: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const JoinRoomScreen()),
+                        ),
+                        icon: const Icon(Icons.search),
+                        label: Text(AppLocalizations.of(context).roomsJoinRoom),
+                      ),
+                      ElevatedButton.icon(
+                        onPressed: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const CreateRoomScreen()),
+                        ),
+                        icon: const Icon(Icons.add),
+                        label: Text(AppLocalizations.of(context).roomsCreateRoom),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                OutlinedButton.icon(
-                  onPressed: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const JoinRoomScreen()),
-                  ),
-                  icon: const Icon(Icons.search),
-                  label: const Text('Join Room'),
-                ),
-                const SizedBox(width: 12),
-                ElevatedButton.icon(
-                  onPressed: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const CreateRoomScreen()),
-                  ),
-                  icon: const Icon(Icons.add),
-                  label: const Text('Create Room'),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }
@@ -282,7 +298,7 @@ class _RoomTile extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '${room.memberCount} member${room.memberCount == 1 ? '' : 's'} · Code ${room.code}',
+                      '${AppLocalizations.of(context).joinRoomMembers(room.memberCount)} · ${AppLocalizations.of(context).roomsCodePrefix}${room.code}',
                       style: TextStyle(
                         fontSize: 12,
                         color: MomentoTheme.deepPlum.withValues(alpha: 0.6),
@@ -292,7 +308,9 @@ class _RoomTile extends StatelessWidget {
                 ),
               ),
               IconButton(
-                tooltip: isFavorite ? 'Unfavorite' : 'Favorite',
+                tooltip: isFavorite
+                    ? AppLocalizations.of(context).roomsUnfavorite
+                    : AppLocalizations.of(context).roomsFavorite,
                 icon: Icon(
                   isFavorite ? Icons.star : Icons.star_border,
                   color: isFavorite
@@ -302,7 +320,9 @@ class _RoomTile extends StatelessWidget {
                 onPressed: onToggleFavorite,
               ),
               IconButton(
-                tooltip: isActive ? 'Deactivate' : 'Activate',
+                tooltip: isActive
+                    ? AppLocalizations.of(context).roomsDeactivate
+                    : AppLocalizations.of(context).roomsActivate,
                 icon: Icon(
                   isActive
                       ? Icons.notifications_active

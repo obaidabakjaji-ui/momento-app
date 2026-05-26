@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
 import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
 import '../../services/room_service.dart';
 import '../../services/moderation_service.dart';
+import '../../services/locale_service.dart';
 import '../../models/app_user.dart';
 import '../../models/room.dart';
 import '../../theme.dart';
@@ -27,10 +29,11 @@ class _AccountScreenState extends State<AccountScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final uid = _auth.currentUser!.uid;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('My Account')),
+      appBar: AppBar(title: Text(l.accountTitle)),
       body: StreamBuilder<AppUser?>(
         stream: _firestore.watchUser(uid),
         builder: (context, userSnap) {
@@ -47,22 +50,22 @@ class _AccountScreenState extends State<AccountScreen> {
                 _buildStreakCard(user),
               ],
               const SizedBox(height: 24),
-              _sectionTitle('Active Rooms'),
+              _sectionTitle(l.accountActiveRooms),
               const SizedBox(height: 4),
               Text(
-                'Posts go here by default. Toggle on/off in the Rooms tab.',
+                l.accountActiveRoomsDescription,
                 style: TextStyle(
                   fontSize: 12,
                   color: MomentoTheme.deepPlum.withValues(alpha: 0.6),
                 ),
               ),
               const SizedBox(height: 8),
-              _buildRoomList(user, user.activeRoomIds, emptyText: 'No active rooms'),
+              _buildRoomList(user, user.activeRoomIds, emptyText: l.accountNoActiveRooms),
               const SizedBox(height: 24),
-              _sectionTitle('Favorite Rooms'),
+              _sectionTitle(l.accountFavoriteRooms),
               const SizedBox(height: 4),
               Text(
-                'Favorites bubble to the front of the feed and the widget rotation.',
+                l.accountFavoriteRoomsDescription,
                 style: TextStyle(
                   fontSize: 12,
                   color: MomentoTheme.deepPlum.withValues(alpha: 0.6),
@@ -70,13 +73,31 @@ class _AccountScreenState extends State<AccountScreen> {
               ),
               const SizedBox(height: 8),
               _buildRoomList(user, user.favoriteRoomIds,
-                  emptyText: 'No favorites'),
+                  emptyText: l.accountNoFavorites),
               const SizedBox(height: 24),
-              _sectionTitle('Blocked Users'),
+              _sectionTitle(l.accountBlockedUsers),
               const SizedBox(height: 8),
               _buildBlockedList(user),
               const SizedBox(height: 32),
-              _sectionTitle('Legal'),
+              _sectionTitle(l.accountLanguage),
+              const SizedBox(height: 8),
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: ListTile(
+                  leading: const Icon(Icons.language),
+                  title: Text(l.accountLanguage),
+                  subtitle: Text(
+                    LocaleService.displayName(LocaleService.instance.locale, l),
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => _showLanguagePicker(context),
+                ),
+              ),
+              const SizedBox(height: 24),
+              _sectionTitle(l.accountLegal),
               const SizedBox(height: 8),
               Container(
                 decoration: BoxDecoration(
@@ -87,14 +108,14 @@ class _AccountScreenState extends State<AccountScreen> {
                   children: [
                     ListTile(
                       leading: const Icon(Icons.description_outlined),
-                      title: const Text('Terms of Service'),
+                      title: Text(l.accountTermsOfService),
                       trailing: const Icon(Icons.open_in_new, size: 16),
                       onTap: () => launchUrl(Uri.parse(kTermsOfServiceUrl)),
                     ),
                     const Divider(height: 1),
                     ListTile(
                       leading: const Icon(Icons.privacy_tip_outlined),
-                      title: const Text('Privacy Policy'),
+                      title: Text(l.accountPrivacyPolicy),
                       trailing: const Icon(Icons.open_in_new, size: 16),
                       onTap: () => launchUrl(Uri.parse(kPrivacyPolicyUrl)),
                     ),
@@ -113,7 +134,7 @@ class _AccountScreenState extends State<AccountScreen> {
                   );
                 },
                 icon: const Icon(Icons.logout),
-                label: const Text('Sign Out'),
+                label: Text(l.accountSignOut),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: Colors.red,
                   side: const BorderSide(color: Colors.red),
@@ -125,7 +146,7 @@ class _AccountScreenState extends State<AccountScreen> {
                 style: TextButton.styleFrom(
                   foregroundColor: Colors.red.withValues(alpha: 0.7),
                 ),
-                child: const Text('Delete my account'),
+                child: Text(l.accountDeleteMy),
               ),
             ],
           );
@@ -135,23 +156,21 @@ class _AccountScreenState extends State<AccountScreen> {
   }
 
   Future<void> _confirmDeleteAccount() async {
+    final l = AppLocalizations.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete your account?'),
-        content: const Text(
-          'This will permanently remove your account, memberships in all rooms, '
-          'and favorites. Posts will expire naturally. This cannot be undone.',
-        ),
+        title: Text(l.accountDeleteTitle),
+        content: Text(l.accountDeleteBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(l.commonCancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Delete'),
+            child: Text(l.commonDelete),
           ),
         ],
       ),
@@ -169,20 +188,86 @@ class _AccountScreenState extends State<AccountScreen> {
       );
     } on FirebaseAuthException catch (e) {
       if (e.code == 'requires-recent-login') {
-        messenger.showSnackBar(const SnackBar(
-          content: Text(
-            'Please sign out and sign back in, then try deleting again.',
-          ),
+        messenger.showSnackBar(SnackBar(
+          content: Text(l.accountReauthRequired),
         ));
       } else {
-        messenger.showSnackBar(SnackBar(content: Text('Failed: ${e.message}')));
+        messenger.showSnackBar(SnackBar(content: Text(l.accountFailedWithMessage(e.message ?? ''))));
       }
     } catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text('Failed: $e')));
+      messenger.showSnackBar(SnackBar(content: Text(l.commonFailedWithError(e.toString()))));
     }
   }
 
+  Future<void> _showLanguagePicker(BuildContext context) async {
+    final l = AppLocalizations.of(context);
+    final current = LocaleService.instance.locale;
+    final picked = await showModalBottomSheet<Locale?>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetCtx) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 8),
+              Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: MomentoTheme.deepPlum.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: Text(
+                    l.accountLanguage,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: MomentoTheme.deepPlum,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              ListTile(
+                title: Text(l.accountLanguageSystem),
+                trailing: current == null
+                    ? const Icon(Icons.check, color: MomentoTheme.coral)
+                    : null,
+                onTap: () => Navigator.pop(sheetCtx, null),
+              ),
+              ...LocaleService.selectableLocales.map((loc) {
+                final selected = current?.languageCode == loc.languageCode;
+                return ListTile(
+                  title: Text(LocaleService.displayName(loc, l)),
+                  trailing: selected
+                      ? const Icon(Icons.check, color: MomentoTheme.coral)
+                      : null,
+                  onTap: () => Navigator.pop(sheetCtx, loc),
+                );
+              }),
+              const SizedBox(height: 8),
+            ],
+          ),
+        );
+      },
+    );
+    // null from cancel vs explicit pop. Both null-locale and a Locale are valid choices.
+    if (picked == null && current == null) return;
+    await LocaleService.instance.setLocale(picked);
+  }
+
   Widget _buildProfileCard(AppUser user) {
+    final l = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -239,7 +324,7 @@ class _AccountScreenState extends State<AccountScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${user.roomIds.length} room${user.roomIds.length == 1 ? '' : 's'}',
+                  l.accountRoomsCount(user.roomIds.length),
                   style: TextStyle(
                     color: MomentoTheme.deepPlum.withValues(alpha: 0.5),
                     fontSize: 12,
@@ -250,7 +335,7 @@ class _AccountScreenState extends State<AccountScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.edit_outlined),
-            tooltip: 'Edit profile',
+            tooltip: l.accountEditProfile,
             color: MomentoTheme.coral,
             onPressed: () => Navigator.push(
               context,
@@ -265,6 +350,7 @@ class _AccountScreenState extends State<AccountScreen> {
   }
 
   Widget _buildStreakCard(AppUser user) {
+    final l = AppLocalizations.of(context);
     final best = user.longestStreak;
     return Container(
       padding: const EdgeInsets.all(16),
@@ -284,7 +370,7 @@ class _AccountScreenState extends State<AccountScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '${user.currentStreak}-day streak',
+                  l.accountStreakDays(user.currentStreak),
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 18,
@@ -293,8 +379,8 @@ class _AccountScreenState extends State<AccountScreen> {
                 ),
                 Text(
                   best > user.currentStreak
-                      ? 'Best: $best days'
-                      : 'Keep it going — post today',
+                      ? l.accountStreakBest(best)
+                      : l.accountStreakKeepGoing,
                   style: const TextStyle(
                     color: Colors.white70,
                     fontSize: 12,
@@ -320,6 +406,7 @@ class _AccountScreenState extends State<AccountScreen> {
   }
 
   Widget _buildBlockedList(AppUser user) {
+    final l = AppLocalizations.of(context);
     if (user.blockedUserIds.isEmpty) {
       return Container(
         padding: const EdgeInsets.all(16),
@@ -328,7 +415,7 @@ class _AccountScreenState extends State<AccountScreen> {
           borderRadius: BorderRadius.circular(12),
         ),
         child: Text(
-          'No blocked users',
+          l.accountNoBlocked,
           style: TextStyle(
             color: MomentoTheme.deepPlum.withValues(alpha: 0.5),
           ),
@@ -384,7 +471,7 @@ class _AccountScreenState extends State<AccountScreen> {
                       currentUserId: user.uid,
                       targetUserId: blocked.uid,
                     ),
-                    child: const Text('Unblock'),
+                    child: Text(l.accountUnblock),
                   ),
                 ],
               ),
