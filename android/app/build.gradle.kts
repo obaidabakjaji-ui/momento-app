@@ -27,7 +27,7 @@ android {
         applicationId = "com.momento.momento"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = 23
+        minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
@@ -44,4 +44,15 @@ android {
 
 flutter {
     source = "../.."
+}
+
+// home_widget 0.9.0 declares androidx.glance:glance-appwidget:1.+ (wildcard),
+// which Gradle resolves to 1.3.0-alpha01 — an alpha that requires compileSdk 37
+// (Android 17, still in preview). Pin to 1.1.1 (the latest published stable —
+// the 1.2.x line only ever reached release candidates, never stable).
+configurations.all {
+    resolutionStrategy {
+        force("androidx.glance:glance-appwidget:1.1.1")
+        force("androidx.glance:glance:1.1.1")
+    }
 }
