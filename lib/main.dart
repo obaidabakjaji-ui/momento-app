@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'firebase_options.dart';
 import 'l10n/app_localizations.dart';
 import 'theme.dart';
@@ -16,6 +18,24 @@ import 'screens/onboarding/onboarding_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  // App Check: attestation that requests come from the real Huddlex app.
+  // In debug builds we use the debug provider — the token it prints to
+  // stdout has to be added to Firebase Console (App Check → Apps → Manage
+  // debug tokens) so the backend will accept it. In release builds we use
+  // App Attest on iOS and Play Integrity on Android. Apple Developer
+  // Program approval + App Attest capability are required for App Attest
+  // to work on real devices; until that's set up, release iOS will fall
+  // back to DeviceCheck (still real attestation, just less granular).
+  await FirebaseAppCheck.instance.activate(
+    providerAndroid: kDebugMode
+        ? AndroidDebugProvider()
+        : AndroidPlayIntegrityProvider(),
+    providerApple: kDebugMode
+        ? AppleDebugProvider()
+        : AppleAppAttestWithDeviceCheckFallbackProvider(),
+  );
+
   await WidgetService().initialize();
   await LocaleService.instance.load();
   runApp(const MomentoApp());
