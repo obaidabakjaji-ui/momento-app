@@ -114,14 +114,31 @@ struct MomentoProvider: TimelineProvider {
             )]
         }
 
-        return paths.enumerated().map { (i, path) in
+        // Posts expire 6 hours after createdAt. The Flutter app filters
+        // expired posts on the client when fetching, but the widget keeps
+        // showing whatever was cached the last time the app ran. If the user
+        // doesn't open the app, expired posts persist on the home screen.
+        // Filter here so the widget self-corrects without needing the app.
+        let now = Date()
+        let postLifetime: TimeInterval = 6 * 60 * 60
+
+        var entries: [MomentoEntry] = []
+        for (i, path) in paths.enumerated() {
             let createdAt: Date? = {
                 guard i < createdAtsMs.count else { return nil }
                 let ms = createdAtsMs[i]
                 guard ms > 0 else { return nil }
                 return Date(timeIntervalSince1970: Double(ms) / 1000.0)
             }()
-            return MomentoEntry(
+
+            // Skip posts whose 6-hour window has elapsed. createdAt == nil
+            // means legacy data without timestamps — show those (rare).
+            if let created = createdAt,
+               now.timeIntervalSince(created) >= postLifetime {
+                continue
+            }
+
+            entries.append(MomentoEntry(
                 date: Date(),
                 imagePath: path,
                 senderName: i < names.count ? names[i] : "",
@@ -131,8 +148,25 @@ struct MomentoProvider: TimelineProvider {
                 createdAt: createdAt,
                 isFavorite: i < favs.count ? favs[i] : false,
                 isVideo: i < videos.count ? videos[i] : false,
-                index: i,
-                total: paths.count
+                index: entries.count,
+                total: 0 // patched after loop
+            ))
+        }
+
+        // Patch the `total` field now that we know the post-filter count.
+        return entries.map { e in
+            MomentoEntry(
+                date: e.date,
+                imagePath: e.imagePath,
+                senderName: e.senderName,
+                roomName: e.roomName,
+                caption: e.caption,
+                likeCount: e.likeCount,
+                createdAt: e.createdAt,
+                isFavorite: e.isFavorite,
+                isVideo: e.isVideo,
+                index: e.index,
+                total: entries.count
             )
         }
     }

@@ -60,7 +60,22 @@ class MomentoWidgetReceiver : HomeWidgetProvider() {
         val captions = parseArray(widgetData.getString("momento_captions", "[]"))
         val likes = parseArray(widgetData.getString("momento_likes", "[]"))
         val createdAts = parseArray(widgetData.getString("momento_created_ats", "[]"))
-        val count = paths.length()
+
+        // Filter out expired posts (createdAt + 6h < now). The Flutter app
+        // strips expired posts when fetching, but the widget keeps showing
+        // whatever was last cached. Without this guard, photos persist on
+        // the home screen indefinitely if the user doesn't open the app.
+        val postLifetimeMs = 6L * 60L * 60L * 1000L
+        val nowMs = System.currentTimeMillis()
+        val activeIndices = mutableListOf<Int>()
+        for (i in 0 until paths.length()) {
+            val createdAtMs = createdAts.optLongAt(i)
+            // createdAt == 0 means legacy data without a timestamp — keep it.
+            if (createdAtMs <= 0 || nowMs - createdAtMs < postLifetimeMs) {
+                activeIndices.add(i)
+            }
+        }
+        val count = activeIndices.size
 
         appWidgetIds.forEach { widgetId ->
             val views = RemoteViews(context.packageName, R.layout.momento_widget)
@@ -69,7 +84,8 @@ class MomentoWidgetReceiver : HomeWidgetProvider() {
                 showEmptyState(views)
             } else {
                 val prefs = context.getSharedPreferences("home_widget_prefs", Context.MODE_PRIVATE)
-                val currentIndex = prefs.getInt("$PREF_CURRENT_INDEX$widgetId", 0) % count
+                val displayIndex = prefs.getInt("$PREF_CURRENT_INDEX$widgetId", 0) % count
+                val currentIndex = activeIndices[displayIndex]
                 val imagePath = paths.getString(currentIndex)
                 val senderName = names.optStringSafe(currentIndex)
                 val roomName = rooms.optStringSafe(currentIndex)
@@ -105,7 +121,7 @@ class MomentoWidgetReceiver : HomeWidgetProvider() {
 
                 // Top-right: page counter
                 if (count > 1) {
-                    views.setTextViewText(R.id.widget_counter, "${currentIndex + 1}/$count")
+                    views.setTextViewText(R.id.widget_counter, "${displayIndex + 1}/$count")
                     views.setViewVisibility(R.id.widget_counter, View.VISIBLE)
                 } else {
                     views.setViewVisibility(R.id.widget_counter, View.GONE)

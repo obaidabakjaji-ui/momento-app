@@ -16,6 +16,8 @@
  */
 
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
+const { onDocumentDeleted } = require("firebase-functions/v2/firestore");
+const { logger } = require("firebase-functions/v2");
 const admin = require("firebase-admin");
 const crypto = require("crypto");
 
@@ -167,3 +169,75 @@ exports.verifyEmailCode = onCall({ region: "us-central1" }, async (req) => {
 
   return { verified: true };
 });
+
+/**
+ * Storage cleanup — when a post document is deleted (either by client,
+ * by `firestore TTL`, or by an admin), delete the underlying image and
+ * video files from Cloud Storage so they don't accumulate forever.
+ *
+ * Triggers on any document delete under `rooms/{roomId}/posts/{postId}`.
+ *
+ * The post's imageUrl/videoUrl are Firebase Storage download URLs of the
+ * form:
+ *   https://firebasestorage.googleapis.com/v0/b/<bucket>/o/<URL-encoded-path>?alt=media&token=...
+ * We extract the storage path from the URL and delete the object.
+ */
+exports.cleanupPostStorage = onDocumentDeleted(
+  {
+    region: "us-central1",
+    document: "rooms/{roomId}/posts/{postId}",
+  },
+  async (event) => {
+    const data = event.data?.data();
+    if (!data) return;
+
+    const urls = [];
+    if (typeof data.imageUrl === "string" && data.imageUrl.length > 0) {
+      urls.push(data.imageUrl);
+    }
+    if (typeof data.videoUrl === "string" && data.videoUrl.length > 0) {
+      urls.push(data.videoUrl);
+    }
+    if (urls.length === 0) return;
+
+    const bucket = admin.storage().bucket();
+    await Promise.all(
+      urls.map(async (url) => {
+        const path = extractStoragePath(url);
+        if (!path) {
+          logger.warn(`cleanupPostStorage: could not parse path from ${url}`);
+          return;
+        }
+        try {
+          await bucket.file(path).delete();
+        } catch (e) {
+          // Not-found is fine — file may have been cleaned up already.
+          if (e?.code !== 404) {
+            logger.error(`cleanupPostStorage: failed to delete ${path}: ${e}`);
+          }
+        }
+      })
+    );
+  }
+);
+
+/**
+ * Pull the storage path out of a Firebase Storage download URL.
+ * Returns null if the URL doesn't look like one we recognize.
+ *
+ * Example input:
+ *   https://firebasestorage.googleapis.com/v0/b/momento-app-64950.firebasestorage.app/o/momentos%2FuserAbc%2Ffile.jpg?alt=media&token=...
+ * Returns:
+ *   momentos/userAbc/file.jpg
+ */
+function extractStoragePath(url) {
+  try {
+    const parsed = new URL(url);
+    // Path looks like /v0/b/<bucket>/o/<encoded-path>
+    const match = parsed.pathname.match(/\/o\/(.+)$/);
+    if (!match) return null;
+    return decodeURIComponent(match[1]);
+  } catch (_) {
+    return null;
+  }
+}
