@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Compose owns all real theming (ui/theme/Theme.kt); this XML theme
+         only styles the window before the first frame. Seashell background
+         matches the Flutter splash so cutover is visually seamless. -->
+    <style name="Theme.Huddlex" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/seashell</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
+    <color name="seashell">#FFF5EE</color>
+    <color name="ic_launcher_background">#FF6B6B</color>
+</resources>
