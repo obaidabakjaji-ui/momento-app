@@ -60,6 +60,11 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.7")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
     implementation("androidx.core:core-ktx:1.15.0")
+    // Full Material icon set (camera logo, visibility toggles, etc.). Debug
+    // builds carry the whole artifact; R8 strips unused icons at release.
+    implementation("androidx.compose.material:material-icons-extended")
+    // Custom Tabs for Terms/Privacy links (url_launcher replacement).
+    implementation("androidx.browser:browser:1.8.0")
 
     // Firebase — BoM keeps individual SDK versions coherent.
     val firebaseBom = platform("com.google.firebase:firebase-bom:33.7.0")
