@@ -301,7 +301,8 @@ class MomentoWidgetReceiver : HomeWidgetProvider() {
     )
 
     private fun computeActiveIndicesFromArrays(arrays: Arrays): List<Int> {
-        val postLifetimeMs = 6L * 60L * 60L * 1000L
+        // TESTING ONLY — revert to 6L * 60L * 60L * 1000L before shipping!
+        val postLifetimeMs = 30L * 1000L
         val nowMs = System.currentTimeMillis()
         val active = mutableListOf<Int>()
         for (i in 0 until arrays.paths.length()) {
