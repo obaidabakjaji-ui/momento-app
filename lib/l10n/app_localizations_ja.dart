@@ -171,6 +171,39 @@ class AppLocalizationsJa extends AppLocalizations {
       'すべての写真が自動的に期限切れになります。撮って、共有して、進む — アーカイブもプレッシャーもなし。';
 
   @override
+  String get onboardingWidgetTitle => 'ホーム画面に';
+
+  @override
+  String get onboardingWidgetBody =>
+      'Huddlex ウィジェットをホーム画面に追加すると、最新のハドルが一日中切り替わります。';
+
+  @override
+  String get onboardingLocationLockTitle => '場所をピン留め（任意）';
+
+  @override
+  String get onboardingLocationLockBody =>
+      'コミュニティ管理者は、投稿を実世界の場所に制限できます — 授業、イベント、集まり。エリア外からの投稿は事前の承認が必要です。';
+
+  @override
+  String get roomSettingsReportRoom => 'このコミュニティを報告';
+
+  @override
+  String get roomSettingsReportTitle => 'このコミュニティを報告しますか？';
+
+  @override
+  String get roomSettingsReportBody =>
+      'チームがこのコミュニティを確認します。確認の間も使用を続けられます — 二度と表示したくない場合はここから退出してください。';
+
+  @override
+  String get roomSettingsReportReasonHint => '何が問題ですか？（任意）';
+
+  @override
+  String get roomSettingsReportSubmit => '報告を送信';
+
+  @override
+  String get roomSettingsReportSent => 'ありがとうございます — 確認します。';
+
+  @override
   String get onboardingSkip => 'スキップ';
 
   @override
@@ -395,6 +428,64 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get roomSettingsNoPending => '保留中のリクエストはありません';
+
+  @override
+  String get roomSettingsLocationLock => '位置ロック';
+
+  @override
+  String get roomSettingsLocationLockToggle => '場所に投稿を制限';
+
+  @override
+  String get roomSettingsLocationLockDescription =>
+      'オンの場合、ピン留めしたエリア外からの投稿は管理者の承認が必要です。管理者は常に即座に投稿できます。';
+
+  @override
+  String roomSettingsLocationPinSet(String lat, String lng) {
+    return '$lat, $lng にピン留め';
+  }
+
+  @override
+  String get roomSettingsLocationPinNotSet => 'ピン未設定';
+
+  @override
+  String get roomSettingsLocationUseCurrent => '現在地をピン留め';
+
+  @override
+  String get roomSettingsLocationRadius => '許可半径';
+
+  @override
+  String get roomSettingsLocationFailedServices =>
+      'ピンを設定するには位置情報サービスをオンにしてください。';
+
+  @override
+  String get roomSettingsLocationFailedPermission => '位置情報の許可が拒否されました。';
+
+  @override
+  String get roomSettingsLocationFailedPermissionForever =>
+      '位置情報の許可が完全に拒否されました。設定から有効化してください。';
+
+  @override
+  String get roomSettingsLocationFailedTimeout =>
+      '位置情報を時間内に取得できませんでした。屋外で再試行してください。';
+
+  @override
+  String get roomSettingsLocationFailedUnknown => '位置情報を取得できませんでした。';
+
+  @override
+  String get accountFeedback => 'フィードバックを送信';
+
+  @override
+  String get accountFeedbackSubtitle => 'バグ、アイデア、感謝 — すべて拝見します';
+
+  @override
+  String get accountFeedbackSubject => 'Huddlex フィードバック';
+
+  @override
+  String get accountFeedbackBody => 'こんにちは！起きたこと / 見たいこと:\n\n';
+
+  @override
+  String get accountFeedbackFailedToOpen =>
+      'メールアプリを開けませんでした。obaidabakjaji@gmail.com 宛に送信してください。';
 
   @override
   String get roomSettingsTrustedTag => '信頼 — 投稿承認をスキップ';
@@ -704,6 +795,18 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get postActionsBlock => 'ブロック';
+
+  @override
+  String get postActionsDelete => 'このHuddleを削除';
+
+  @override
+  String get postActionsDeleteTitle => 'このHuddleを削除しますか？';
+
+  @override
+  String get postActionsDeleteBody => 'すぐにコミュニティから削除されます。元に戻せません。';
+
+  @override
+  String get postActionsDeleted => '削除しました。';
 
   @override
   String likedByCount(int count) {

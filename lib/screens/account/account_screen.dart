@@ -97,6 +97,35 @@ class _AccountScreenState extends State<AccountScreen> {
                 ),
               ),
               const SizedBox(height: 24),
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: ListTile(
+                  leading: const Icon(
+                    Icons.feedback_outlined,
+                    color: MomentoTheme.coral,
+                  ),
+                  title: Text(
+                    l.accountFeedback,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: MomentoTheme.deepPlum,
+                    ),
+                  ),
+                  subtitle: Text(
+                    l.accountFeedbackSubtitle,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: MomentoTheme.deepPlum.withValues(alpha: 0.6),
+                    ),
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: _openFeedbackEmail,
+                ),
+              ),
+              const SizedBox(height: 24),
               _sectionTitle(l.accountLegal),
               const SizedBox(height: 8),
               Container(
@@ -153,6 +182,43 @@ class _AccountScreenState extends State<AccountScreen> {
         },
       ),
     );
+  }
+
+  Future<void> _openFeedbackEmail() async {
+    final l = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final uri = Uri(
+      scheme: 'mailto',
+      path: 'obaidabakjaji@gmail.com',
+      query: _encodeMailtoQuery({
+        'subject': l.accountFeedbackSubject,
+        'body': l.accountFeedbackBody,
+      }),
+    );
+    try {
+      final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!launched && mounted) {
+        messenger.showSnackBar(
+          SnackBar(content: Text(l.accountFeedbackFailedToOpen)),
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        messenger.showSnackBar(
+          SnackBar(content: Text(l.accountFeedbackFailedToOpen)),
+        );
+      }
+    }
+  }
+
+  /// `Uri` encodes mailto queries with `+` for spaces; mail clients want
+  /// `%20`. Hand-roll the query string so subject/body land correctly on
+  /// both iOS Mail and Gmail Android.
+  String _encodeMailtoQuery(Map<String, String> params) {
+    return params.entries
+        .map((e) =>
+            '${Uri.encodeQueryComponent(e.key)}=${Uri.encodeQueryComponent(e.value).replaceAll('+', '%20')}')
+        .join('&');
   }
 
   Future<void> _confirmDeleteAccount() async {

@@ -36,6 +36,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           title: l.onboardingExpireTitle,
           body: l.onboardingExpireBody,
         ),
+        _OnboardingPage(
+          icon: Icons.widgets_outlined,
+          title: l.onboardingWidgetTitle,
+          body: l.onboardingWidgetBody,
+        ),
+        _OnboardingPage(
+          icon: Icons.place_outlined,
+          title: l.onboardingLocationLockTitle,
+          body: l.onboardingLocationLockBody,
+        ),
       ];
 
   @override

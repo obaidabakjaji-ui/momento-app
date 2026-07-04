@@ -170,6 +170,39 @@ class AppLocalizationsKo extends AppLocalizations {
       '모든 사진은 자동으로 만료됩니다. 찍고, 공유하고, 넘어가세요 — 보관도, 부담도 없이.';
 
   @override
+  String get onboardingWidgetTitle => '홈 화면에';
+
+  @override
+  String get onboardingWidgetBody =>
+      'Huddlex 위젯을 홈 화면에 추가하면 최신 허들이 하루 종일 순환됩니다.';
+
+  @override
+  String get onboardingLocationLockTitle => '장소 고정 (선택)';
+
+  @override
+  String get onboardingLocationLockBody =>
+      '커뮤니티 관리자는 게시를 실제 장소에 잠글 수 있습니다 — 수업, 이벤트, 모임. 영역 밖에서의 게시물은 먼저 승인이 필요합니다.';
+
+  @override
+  String get roomSettingsReportRoom => '이 커뮤니티 신고';
+
+  @override
+  String get roomSettingsReportTitle => '이 커뮤니티를 신고하시겠습니까?';
+
+  @override
+  String get roomSettingsReportBody =>
+      '팀이 이 커뮤니티를 검토합니다. 검토 동안에도 계속 사용할 수 있습니다 — 다시 보고 싶지 않다면 여기서 나가세요.';
+
+  @override
+  String get roomSettingsReportReasonHint => '무엇이 문제인가요? (선택)';
+
+  @override
+  String get roomSettingsReportSubmit => '신고 보내기';
+
+  @override
+  String get roomSettingsReportSent => '감사합니다 — 살펴보겠습니다.';
+
+  @override
   String get onboardingSkip => '건너뛰기';
 
   @override
@@ -394,6 +427,63 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get roomSettingsNoPending => '대기 중인 요청 없음';
+
+  @override
+  String get roomSettingsLocationLock => '위치 잠금';
+
+  @override
+  String get roomSettingsLocationLockToggle => '장소에 게시 잠금';
+
+  @override
+  String get roomSettingsLocationLockDescription =>
+      '켜져 있으면 고정된 영역 밖에서의 게시물은 관리자 승인이 필요합니다. 관리자는 즉시 게시됩니다.';
+
+  @override
+  String roomSettingsLocationPinSet(String lat, String lng) {
+    return '$lat, $lng에 고정됨';
+  }
+
+  @override
+  String get roomSettingsLocationPinNotSet => '고정된 위치 없음';
+
+  @override
+  String get roomSettingsLocationUseCurrent => '내 현재 위치를 고정';
+
+  @override
+  String get roomSettingsLocationRadius => '허용 반경';
+
+  @override
+  String get roomSettingsLocationFailedServices => '위치 서비스를 켜고 핀을 설정하세요.';
+
+  @override
+  String get roomSettingsLocationFailedPermission => '위치 권한이 거부되었습니다.';
+
+  @override
+  String get roomSettingsLocationFailedPermissionForever =>
+      '위치 권한이 영구적으로 거부되었습니다. 설정에서 활성화하세요.';
+
+  @override
+  String get roomSettingsLocationFailedTimeout =>
+      '위치를 시간 내에 읽을 수 없습니다. 야외에서 다시 시도하세요.';
+
+  @override
+  String get roomSettingsLocationFailedUnknown => '위치를 읽을 수 없습니다.';
+
+  @override
+  String get accountFeedback => '피드백 보내기';
+
+  @override
+  String get accountFeedbackSubtitle => '버그, 아이디어, 또는 감사 — 모두 읽습니다';
+
+  @override
+  String get accountFeedbackSubject => 'Huddlex 피드백';
+
+  @override
+  String get accountFeedbackBody => '안녕하세요! 일어난 일 / 보고 싶은 것:\n\n';
+
+  @override
+  String get accountFeedbackFailedToOpen =>
+      '이메일 앱을 열 수 없습니다. obaidabakjaji@gmail.com 으로 보내주세요.';
 
   @override
   String get roomSettingsTrustedTag => '신뢰 — 게시물 승인 생략';
@@ -703,6 +793,18 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get postActionsBlock => '차단';
+
+  @override
+  String get postActionsDelete => '이 Huddle 삭제';
+
+  @override
+  String get postActionsDeleteTitle => '이 Huddle을 삭제할까요?';
+
+  @override
+  String get postActionsDeleteBody => '즉시 커뮤니티에서 제거됩니다. 되돌릴 수 없습니다.';
+
+  @override
+  String get postActionsDeleted => '삭제되었습니다.';
 
   @override
   String likedByCount(int count) {

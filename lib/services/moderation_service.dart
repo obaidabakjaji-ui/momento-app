@@ -49,6 +49,21 @@ class ModerationService {
     });
   }
 
+  /// Report a community for manual review.
+  Future<void> reportRoom({
+    required String reporterId,
+    required String roomId,
+    String? reason,
+  }) async {
+    await _reports.add({
+      'type': 'room',
+      'reporterId': reporterId,
+      'roomId': roomId,
+      'reason': reason,
+      'createdAt': Timestamp.fromDate(DateTime.now()),
+    });
+  }
+
   /// Report a specific post. Stores both the post id and the sender id so a
   /// reviewer can act on either.
   Future<void> reportPost({

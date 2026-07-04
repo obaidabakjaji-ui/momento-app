@@ -1,15 +1,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Camera + mic for recording 6sec clips. Audio is stripped before
-         posting (video_compress includeAudio: false), but the OS still
-         requires the permission to start a recording session. -->
     <uses-permission android:name="android.permission.CAMERA" />
-    <uses-permission android:name="android.permission.RECORD_AUDIO" />
-    <!-- Picking video from gallery on Android 13+ uses the granular
-         READ_MEDIA_VIDEO permission instead of READ_EXTERNAL_STORAGE. -->
-    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
-    <!-- video_player streams over the network. -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Location lock: communities can require posts to come from inside a
+         pinned area. We only ever read foreground location (during the
+         posting flow), so coarse + fine fine; no background variant. -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
     <application
         android:label="Huddlex"
@@ -54,6 +51,7 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/momento_widget_info" />
         </receiver>
+
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

@@ -172,6 +172,39 @@ class AppLocalizationsAr extends AppLocalizations {
       'كل صورة تنتهي صلاحيتها تلقائيًا. التقط، شارك، وامضِ — لا أرشيف، ولا ضغط.';
 
   @override
+  String get onboardingWidgetTitle => 'على شاشتك الرئيسية';
+
+  @override
+  String get onboardingWidgetBody =>
+      'ضع ودجة Huddlex على شاشتك الرئيسية لتعرض آخر اللقاءات طوال اليوم.';
+
+  @override
+  String get onboardingLocationLockTitle => 'ثبّت مكانًا (اختياري)';
+
+  @override
+  String get onboardingLocationLockBody =>
+      'يستطيع مشرفو المجتمعات قفل النشر على مكان حقيقي — حصة، فعالية، لقاء. المنشورات من خارج المنطقة تحتاج موافقة أولًا.';
+
+  @override
+  String get roomSettingsReportRoom => 'الإبلاغ عن هذا المجتمع';
+
+  @override
+  String get roomSettingsReportTitle => 'الإبلاغ عن هذا المجتمع؟';
+
+  @override
+  String get roomSettingsReportBody =>
+      'سيقوم فريقنا بمراجعة هذا المجتمع. يمكنك متابعة استخدامه أثناء المراجعة — غادره من هنا إذا كنت تفضل عدم رؤيته مجددًا.';
+
+  @override
+  String get roomSettingsReportReasonHint => 'ما المشكلة هنا؟ (اختياري)';
+
+  @override
+  String get roomSettingsReportSubmit => 'إرسال البلاغ';
+
+  @override
+  String get roomSettingsReportSent => 'شكرًا — سنلقي نظرة.';
+
+  @override
   String get onboardingSkip => 'تخطّي';
 
   @override
@@ -412,6 +445,64 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get roomSettingsNoPending => 'لا توجد طلبات معلقة';
+
+  @override
+  String get roomSettingsLocationLock => 'قفل الموقع';
+
+  @override
+  String get roomSettingsLocationLockToggle => 'قفل النشر على مكان معيّن';
+
+  @override
+  String get roomSettingsLocationLockDescription =>
+      'عند التفعيل، تحتاج المنشورات من خارج المنطقة المثبتة إلى موافقة المشرف. المشرفون ينشرون فورًا دائمًا.';
+
+  @override
+  String roomSettingsLocationPinSet(String lat, String lng) {
+    return 'مثبت عند $lat, $lng';
+  }
+
+  @override
+  String get roomSettingsLocationPinNotSet => 'لم يتم تثبيت نقطة بعد';
+
+  @override
+  String get roomSettingsLocationUseCurrent => 'تثبيت موقعي الحالي';
+
+  @override
+  String get roomSettingsLocationRadius => 'نصف القطر المسموح';
+
+  @override
+  String get roomSettingsLocationFailedServices =>
+      'فعّل خدمات الموقع لتثبيت النقطة.';
+
+  @override
+  String get roomSettingsLocationFailedPermission => 'تم رفض إذن الموقع.';
+
+  @override
+  String get roomSettingsLocationFailedPermissionForever =>
+      'تم رفض إذن الموقع نهائيًا. افتح الإعدادات لتفعيله.';
+
+  @override
+  String get roomSettingsLocationFailedTimeout =>
+      'تعذّر قراءة موقعك في الوقت المحدد. حاول مجددًا في الخارج.';
+
+  @override
+  String get roomSettingsLocationFailedUnknown => 'تعذّر قراءة موقعك.';
+
+  @override
+  String get accountFeedback => 'إرسال ملاحظات';
+
+  @override
+  String get accountFeedbackSubtitle => 'خطأ أو فكرة أو شكر — نقرأ كل شيء';
+
+  @override
+  String get accountFeedbackSubject => 'ملاحظات Huddlex';
+
+  @override
+  String get accountFeedbackBody => 'مرحبًا! ما حدث / ما أرغب برؤيته:\n\n';
+
+  @override
+  String get accountFeedbackFailedToOpen =>
+      'تعذّر فتح تطبيق البريد. الرجاء المراسلة على obaidabakjaji@gmail.com.';
 
   @override
   String get roomSettingsTrustedTag => 'موثوق — يتجاوز موافقة المنشورات';
@@ -754,6 +845,19 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get postActionsBlock => 'حظر';
+
+  @override
+  String get postActionsDelete => 'حذف هذه اللمّة';
+
+  @override
+  String get postActionsDeleteTitle => 'حذف هذه اللمّة؟';
+
+  @override
+  String get postActionsDeleteBody =>
+      'ستتم إزالتها من المجتمع فورًا. لا يمكن التراجع.';
+
+  @override
+  String get postActionsDeleted => 'تم الحذف.';
 
   @override
   String likedByCount(int count) {

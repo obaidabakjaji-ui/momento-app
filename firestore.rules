@@ -52,7 +52,7 @@ service cloud.firestore {
       allow read: if false;
       allow create: if isSignedIn()
         && request.resource.data.reporterId == request.auth.uid
-        && request.resource.data.type in ['user', 'post'];
+        && request.resource.data.type in ['user', 'post', 'room'];
       allow update, delete: if false;
     }
 
@@ -81,13 +81,17 @@ service cloud.firestore {
           isAdmin(roomId) &&
           request.resource.data.diff(resource.data).affectedKeys()
             .hasOnly(['memberIds', 'adminIds', 'photoUrl',
-                      'requiresPostApproval', 'trustedUserIds'])
+                      'requiresPostApproval', 'trustedUserIds',
+                      'locationLockEnabled', 'locationLat',
+                      'locationLng', 'locationRadiusM'])
         ) ||
         (
           isCreator(roomId) &&
           request.resource.data.diff(resource.data).affectedKeys()
             .hasOnly(['name', 'nameLower', 'memberIds', 'adminIds', 'photoUrl',
-                      'requiresPostApproval', 'trustedUserIds'])
+                      'requiresPostApproval', 'trustedUserIds',
+                      'locationLockEnabled', 'locationLat',
+                      'locationLng', 'locationRadiusM'])
         )
       );
 
@@ -113,16 +117,19 @@ service cloud.firestore {
             || resource.data.senderId == request.auth.uid
           );
 
-        // On create, `pending` must match the room's current policy for the
-        // sender. Non-admin, non-trusted members in an approval-required room
-        // must set pending=true; everyone else sets pending=false.
+        // On create, the sender may always self-mark pending=true (e.g. the
+        // client knows the room's location lock kicked in). They may only
+        // set pending=false if the room's approval requirement doesn't
+        // apply to them — admins and trusted users always, plus anyone
+        // when the room isn't gating posts at all.
         allow create: if isMember(roomId)
           && request.resource.data.senderId == request.auth.uid
           && request.resource.data.roomId == roomId
-          && request.resource.data.pending == (
-            room(roomId).requiresPostApproval == true
-            && !(request.auth.uid in room(roomId).adminIds)
-            && !(request.auth.uid in room(roomId).trustedUserIds)
+          && (
+            request.resource.data.pending == true
+            || room(roomId).requiresPostApproval != true
+            || request.auth.uid in room(roomId).adminIds
+            || request.auth.uid in room(roomId).trustedUserIds
           );
 
         allow delete: if resource.data.senderId == request.auth.uid || isAdmin(roomId);

@@ -168,6 +168,38 @@ class AppLocalizationsZh extends AppLocalizations {
   String get onboardingExpireBody => '每张照片都会自动过期。拍下、分享、然后继续 — 没有存档，没有压力。';
 
   @override
+  String get onboardingWidgetTitle => '在你的主屏幕上';
+
+  @override
+  String get onboardingWidgetBody => '将 Huddlex 小组件添加到主屏幕，你的最新 huddle 会全天滚动显示。';
+
+  @override
+  String get onboardingLocationLockTitle => '固定一个地点（可选）';
+
+  @override
+  String get onboardingLocationLockBody =>
+      '社区管理员可以将发布锁定到真实地点 — 课堂、活动、聚会。来自区域外的帖子需要先经过审批。';
+
+  @override
+  String get roomSettingsReportRoom => '举报此社区';
+
+  @override
+  String get roomSettingsReportTitle => '举报此社区？';
+
+  @override
+  String get roomSettingsReportBody =>
+      '我们的团队将审核此社区。审核期间你仍可继续使用 — 如果不想再看到它，可以从这里退出。';
+
+  @override
+  String get roomSettingsReportReasonHint => '这里出了什么问题？（可选）';
+
+  @override
+  String get roomSettingsReportSubmit => '发送举报';
+
+  @override
+  String get roomSettingsReportSent => '谢谢 — 我们会查看。';
+
+  @override
   String get onboardingSkip => '跳过';
 
   @override
@@ -392,6 +424,62 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get roomSettingsNoPending => '没有待处理的请求';
+
+  @override
+  String get roomSettingsLocationLock => '位置锁定';
+
+  @override
+  String get roomSettingsLocationLockToggle => '将发布锁定到某个地点';
+
+  @override
+  String get roomSettingsLocationLockDescription =>
+      '开启后，来自固定区域外的帖子需要管理员审批。管理员始终可以立即发布。';
+
+  @override
+  String roomSettingsLocationPinSet(String lat, String lng) {
+    return '已固定在 $lat, $lng';
+  }
+
+  @override
+  String get roomSettingsLocationPinNotSet => '尚未设置位置';
+
+  @override
+  String get roomSettingsLocationUseCurrent => '固定我的当前位置';
+
+  @override
+  String get roomSettingsLocationRadius => '允许半径';
+
+  @override
+  String get roomSettingsLocationFailedServices => '请开启位置服务以设置位置。';
+
+  @override
+  String get roomSettingsLocationFailedPermission => '位置权限被拒绝。';
+
+  @override
+  String get roomSettingsLocationFailedPermissionForever =>
+      '位置权限被永久拒绝。请在设置中开启。';
+
+  @override
+  String get roomSettingsLocationFailedTimeout => '未能及时读取位置。请到户外重试。';
+
+  @override
+  String get roomSettingsLocationFailedUnknown => '未能读取你的位置。';
+
+  @override
+  String get accountFeedback => '发送反馈';
+
+  @override
+  String get accountFeedbackSubtitle => '错误、想法或感谢 — 我们都会阅读';
+
+  @override
+  String get accountFeedbackSubject => 'Huddlex 反馈';
+
+  @override
+  String get accountFeedbackBody => '嗨！发生了什么 / 我想看到的:\n\n';
+
+  @override
+  String get accountFeedbackFailedToOpen =>
+      '无法打开你的邮件应用。请写信至 obaidabakjaji@gmail.com。';
 
   @override
   String get roomSettingsTrustedTag => '受信任 — 跳过帖子审批';
@@ -699,6 +787,18 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get postActionsBlock => '屏蔽';
+
+  @override
+  String get postActionsDelete => '删除此 Huddle';
+
+  @override
+  String get postActionsDeleteTitle => '删除此 Huddle？';
+
+  @override
+  String get postActionsDeleteBody => '将立即从社群中移除。此操作无法撤销。';
+
+  @override
+  String get postActionsDeleted => '已删除。';
 
   @override
   String likedByCount(int count) {

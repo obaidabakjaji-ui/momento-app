@@ -109,9 +109,15 @@ class AuthService {
 
   bool get isEmailVerified => _auth.currentUser?.emailVerified ?? false;
 
+  /// Firebase auto-generated Web OAuth client ID. Required by
+  /// `google_sign_in` 7.x on Android — without it `authenticate()` throws
+  /// `clientConfigurationError`. Bound to project `momento-app-64950`.
+  static const _googleServerClientId =
+      '149110523075-d3dkatbv890ibpm6vtb6rd3p470j3bbm.apps.googleusercontent.com';
+
   Future<UserCredential> signInWithGoogle() async {
     final googleSignIn = GoogleSignIn.instance;
-    await googleSignIn.initialize();
+    await googleSignIn.initialize(serverClientId: _googleServerClientId);
     final googleUser = await googleSignIn.authenticate();
 
     final idToken = googleUser.authentication.idToken;

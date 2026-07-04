@@ -338,13 +338,13 @@ class RoomService {
     required String senderName,
     String? senderPhotoUrl,
     required String imageUrl,
-    String? videoUrl,
-    PostMediaType mediaType = PostMediaType.photo,
     String? caption,
+    double? senderLat,
+    double? senderLng,
   }) async {
     if (roomIds.isEmpty) return const PostResult(live: 0, pending: 0);
 
-    // Fetch each target room so we know its approval policy.
+    // Fetch each target room so we know its approval + geofence policy.
     final rooms = await getRooms(roomIds);
     final roomMap = {for (final r in rooms) r.id: r};
 
@@ -357,7 +357,11 @@ class RoomService {
     for (final roomId in roomIds) {
       final room = roomMap[roomId];
       if (room == null) continue;
-      final isPending = room.requiresApprovalFor(senderId);
+      final isPending = room.requiresApprovalFor(
+        senderId,
+        senderLat: senderLat,
+        senderLng: senderLng,
+      );
       if (isPending) {
         pending++;
       } else {
@@ -373,8 +377,6 @@ class RoomService {
           senderName: senderName,
           senderPhotoUrl: senderPhotoUrl,
           imageUrl: imageUrl,
-          videoUrl: videoUrl,
-          mediaType: mediaType,
           caption: caption,
           createdAt: now,
           expiresAt: expires,
@@ -429,6 +431,28 @@ class RoomService {
     required bool requires,
   }) async {
     await _rooms.doc(roomId).update({'requiresPostApproval': requires});
+  }
+
+  /// Admin enables the geofence lock for a room with a pinned center and
+  /// allowed radius. Posts from outside the circle land in the pending queue.
+  Future<void> setLocationLock({
+    required String roomId,
+    required double lat,
+    required double lng,
+    required int radiusM,
+  }) async {
+    await _rooms.doc(roomId).update({
+      'locationLockEnabled': true,
+      'locationLat': lat,
+      'locationLng': lng,
+      'locationRadiusM': radiusM,
+    });
+  }
+
+  /// Admin disables the geofence lock. The pin/radius are kept in Firestore
+  /// so re-enabling restores the previous setup without re-pinning.
+  Future<void> clearLocationLock({required String roomId}) async {
+    await _rooms.doc(roomId).update({'locationLockEnabled': false});
   }
 
   /// Admin marks a user as trusted (bypasses post approval).
@@ -501,6 +525,21 @@ class RoomService {
             .map(RoomPost.fromFirestore)
             .where((p) => !p.isExpired && !p.pending)
             .toList());
+  }
+
+  /// One-shot fetch of recent visible posts in a room. Used by the
+  /// widget-refresh background task (no listener — we just want a snapshot).
+  Future<List<RoomPost>> getRoomPostsOnce(String roomId, {int limit = 50}) async {
+    final snap = await _rooms
+        .doc(roomId)
+        .collection('posts')
+        .orderBy('createdAt', descending: true)
+        .limit(limit)
+        .get();
+    return snap.docs
+        .map(RoomPost.fromFirestore)
+        .where((p) => !p.isExpired && !p.pending)
+        .toList();
   }
 
   Future<void> deletePost({

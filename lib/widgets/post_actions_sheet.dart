@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../l10n/app_localizations.dart';
 import '../models/room_post.dart';
 import '../services/moderation_service.dart';
+import '../services/room_service.dart';
 import '../theme.dart';
 
 /// Show a bottom sheet with moderation actions for a [RoomPost].
@@ -79,12 +80,32 @@ Future<void> showPostActionsSheet({
               ),
             ] else ...[
               ListTile(
-                leading: Icon(
-                  Icons.info_outline,
-                  color: MomentoTheme.deepPlum.withValues(alpha: 0.6),
-                ),
-                title: Text(l.postActionsOwnPost),
-                subtitle: Text(l.postActionsNoActions),
+                leading: const Icon(Icons.delete_outline, color: Colors.red),
+                title: Text(l.postActionsDelete),
+                onTap: () async {
+                  Navigator.pop(sheetCtx);
+                  final ok = await _confirmDelete(context);
+                  if (ok != true) return;
+                  try {
+                    await RoomService().deletePost(
+                      roomId: post.roomId,
+                      postId: post.id,
+                    );
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(l.postActionsDeleted)),
+                      );
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(l.commonFailedWithError(e.toString())),
+                        ),
+                      );
+                    }
+                  }
+                },
               ),
             ],
             const SizedBox(height: 8),
@@ -141,6 +162,28 @@ Future<bool?> _confirmBlock(BuildContext context, String name) async {
           onPressed: () => Navigator.pop(ctx, true),
           style: TextButton.styleFrom(foregroundColor: Colors.red),
           child: Text(l.postActionsBlock),
+        ),
+      ],
+    ),
+  );
+}
+
+Future<bool?> _confirmDelete(BuildContext context) async {
+  final l = AppLocalizations.of(context);
+  return showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text(l.postActionsDeleteTitle),
+      content: Text(l.postActionsDeleteBody),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, false),
+          child: Text(l.commonCancel),
+        ),
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, true),
+          style: TextButton.styleFrom(foregroundColor: Colors.red),
+          child: Text(l.commonDelete),
         ),
       ],
     ),

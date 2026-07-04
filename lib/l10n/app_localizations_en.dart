@@ -173,6 +173,39 @@ class AppLocalizationsEn extends AppLocalizations {
       'Every photo expires automatically. Snap, share, and move on — no archive, no pressure.';
 
   @override
+  String get onboardingWidgetTitle => 'On your home screen';
+
+  @override
+  String get onboardingWidgetBody =>
+      'Drop the Huddlex widget on your home screen and your latest huddles cycle through it all day.';
+
+  @override
+  String get onboardingLocationLockTitle => 'Pin a place (optional)';
+
+  @override
+  String get onboardingLocationLockBody =>
+      'Community admins can lock posting to a real-world spot — a class, an event, a hangout. Posts from outside the area need approval first.';
+
+  @override
+  String get roomSettingsReportRoom => 'Report this community';
+
+  @override
+  String get roomSettingsReportTitle => 'Report this community?';
+
+  @override
+  String get roomSettingsReportBody =>
+      'Our team will review this community. You can keep using it while we look — leave it from here if you\'d rather not see it again.';
+
+  @override
+  String get roomSettingsReportReasonHint => 'What\'s wrong here? (optional)';
+
+  @override
+  String get roomSettingsReportSubmit => 'Send report';
+
+  @override
+  String get roomSettingsReportSent => 'Thanks — we\'ll take a look.';
+
+  @override
   String get onboardingSkip => 'Skip';
 
   @override
@@ -410,6 +443,68 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get roomSettingsNoPending => 'No pending requests';
+
+  @override
+  String get roomSettingsLocationLock => 'Location lock';
+
+  @override
+  String get roomSettingsLocationLockToggle => 'Lock posting to a place';
+
+  @override
+  String get roomSettingsLocationLockDescription =>
+      'When on, posts from outside the pinned area need admin approval. Admins always post immediately.';
+
+  @override
+  String roomSettingsLocationPinSet(String lat, String lng) {
+    return 'Pinned at $lat, $lng';
+  }
+
+  @override
+  String get roomSettingsLocationPinNotSet => 'No pin set yet';
+
+  @override
+  String get roomSettingsLocationUseCurrent => 'Pin my current location';
+
+  @override
+  String get roomSettingsLocationRadius => 'Allowed radius';
+
+  @override
+  String get roomSettingsLocationFailedServices =>
+      'Turn on location services to set the pin.';
+
+  @override
+  String get roomSettingsLocationFailedPermission =>
+      'Location permission denied.';
+
+  @override
+  String get roomSettingsLocationFailedPermissionForever =>
+      'Location permission was permanently denied. Open Settings to enable it.';
+
+  @override
+  String get roomSettingsLocationFailedTimeout =>
+      'Couldn\'t read your location in time. Try again outdoors.';
+
+  @override
+  String get roomSettingsLocationFailedUnknown =>
+      'Couldn\'t read your location.';
+
+  @override
+  String get accountFeedback => 'Send feedback';
+
+  @override
+  String get accountFeedbackSubtitle =>
+      'Bug, idea, or a thank-you — we read everything';
+
+  @override
+  String get accountFeedbackSubject => 'Huddlex feedback';
+
+  @override
+  String get accountFeedbackBody =>
+      'Hey! Here\'s what happened / what I\'d love to see:\n\n';
+
+  @override
+  String get accountFeedbackFailedToOpen =>
+      'Couldn\'t open your email app. Please write to obaidabakjaji@gmail.com.';
 
   @override
   String get roomSettingsTrustedTag => 'Trusted — bypasses post approval';
@@ -742,6 +837,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get postActionsBlock => 'Block';
+
+  @override
+  String get postActionsDelete => 'Delete this huddle';
+
+  @override
+  String get postActionsDeleteTitle => 'Delete this huddle?';
+
+  @override
+  String get postActionsDeleteBody =>
+      'It\'ll be removed from the community immediately. This can\'t be undone.';
+
+  @override
+  String get postActionsDeleted => 'Deleted.';
 
   @override
   String likedByCount(int count) {

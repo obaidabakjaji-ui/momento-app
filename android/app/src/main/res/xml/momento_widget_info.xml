@@ -1,10 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  Widget defaults to a 2×2 cell footprint, which is square on the launcher
+  grids of all common Android phones (Samsung One UI, Pixel, OnePlus, …
+  all use ~78dp cells, so 2×2 ≈ 156×156dp). targetCellWidth/Height require
+  API 31+; on older Android the launcher falls back to minWidth/minHeight,
+  which we also set to a square value as a safety net.
+
+  Photos are square-cropped at capture time (camera_screen.dart) so they
+  sit edge-to-edge in this square frame with nothing lost to centerCrop.
+
+  resizeMode is left at horizontal|vertical so power users can grow the
+  widget if they want — but the default a normal user lands on is square.
+-->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
     android:initialLayout="@layout/momento_widget"
-    android:minWidth="110dp"
-    android:minHeight="110dp"
+    android:minWidth="210dp"
+    android:minHeight="140dp"
+    android:targetCellWidth="3"
+    android:targetCellHeight="2"
     android:resizeMode="horizontal|vertical"
-    android:updatePeriodMillis="900000"
+    android:updatePeriodMillis="0"
     android:widgetCategory="home_screen"
     android:description="@string/widget_description"
     android:previewLayout="@layout/momento_widget" />

@@ -34,8 +34,8 @@
 		<string>Huddlex needs camera access to take photos and record short clips for your communities.</string>
 		<key>NSPhotoLibraryUsageDescription</key>
 		<string>Huddlex needs photo library access so you can pick photos and clips to share in your communities.</string>
-		<key>NSMicrophoneUsageDescription</key>
-		<string>Huddlex needs microphone access to record video clips. Audio is stripped before posting — your clips never include sound.</string>
+		<key>NSLocationWhenInUseUsageDescription</key>
+		<string>Huddlex uses your location only when you post, so communities can require posts to come from inside an area their admin has pinned.</string>
 		<key>UIMainStoryboardFile</key>
 		<string>Main</string>
 		<key>UISupportedInterfaceOrientations</key>

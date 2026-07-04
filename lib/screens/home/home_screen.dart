@@ -62,18 +62,10 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      floatingActionButton: _tabIndex == 0
-          ? FloatingActionButton.extended(
-              backgroundColor: MomentoTheme.coral,
-              foregroundColor: Colors.white,
-              icon: const Icon(Icons.camera_alt),
-              label: Text(l.homeNewMomento),
-              onPressed: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const CameraScreen()),
-              ),
-            )
-          : null,
+      // No floating action button. The "New Huddle" entry point moved to a
+      // leading IconButton on the inner Feed AppBar (top-left) so it doesn't
+      // overlap the "Xh Ym remaining" countdown chip at the bottom of each
+      // post card.
     );
   }
 }
@@ -118,7 +110,7 @@ class _FeedTab extends StatefulWidget {
   State<_FeedTab> createState() => _FeedTabState();
 }
 
-class _FeedTabState extends State<_FeedTab> {
+class _FeedTabState extends State<_FeedTab> with WidgetsBindingObserver {
   final _auth = AuthService();
   final _firestore = FirestoreService();
   final _rooms = RoomService();
@@ -126,9 +118,29 @@ class _FeedTabState extends State<_FeedTab> {
   final _pageController = PageController();
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _pageController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Returning to the app from background — the widget may have stale data
+    // (workmanager refresh is opportunistic on iOS, and even Android can
+    // skip cycles under doze). A fresh pull from Firestore is the cheapest
+    // way to guarantee the user sees their latest posts the moment they
+    // glance at the home screen.
+    if (state == AppLifecycleState.resumed) {
+      final uid = _auth.currentUser?.uid;
+      if (uid != null) _widget.refreshForUser(uid);
+    }
   }
 
   @override
@@ -155,6 +167,16 @@ class _FeedTabState extends State<_FeedTab> {
 
         return Scaffold(
           appBar: AppBar(
+            // Top-left camera button — replaces the floating "New Huddle"
+            // FAB so the countdown chip on each post card stays unobscured.
+            leading: IconButton(
+              icon: const Icon(Icons.camera_alt, color: MomentoTheme.coral),
+              tooltip: l.homeNewMomento,
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const CameraScreen()),
+              ),
+            ),
             title: Text(
               l.appName,
               style: const TextStyle(fontWeight: FontWeight.bold),
@@ -265,7 +287,8 @@ class _FeedTabState extends State<_FeedTab> {
         isFavoriteRoom: favorites.contains(p.roomId),
         caption: p.caption,
         likeCount: p.likeCount,
-        isVideo: p.isVideo,
+        postId: p.id,
+        roomId: p.roomId,
         createdAtMs: p.createdAt.millisecondsSinceEpoch,
       );
     }).toList();
@@ -429,7 +452,6 @@ class _PostCard extends StatelessWidget {
                     imageUrl: post.imageUrl,
                     heroTag: 'post_${post.id}',
                     caption: post.caption,
-                    videoUrl: post.videoUrl,
                   ),
                 ),
               ),
@@ -437,28 +459,20 @@ class _PostCard extends StatelessWidget {
                 tag: 'post_${post.id}',
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(24),
-                  child: Stack(
-                    children: [
-                      CachedNetworkImage(
-                        imageUrl: post.imageUrl,
-                        fit: BoxFit.cover,
-                        width: double.infinity,
-                        fadeInDuration: const Duration(milliseconds: 350),
-                        placeholder: (_, __) => Container(
-                          color: MomentoTheme.softPink.withValues(alpha: 0.3),
-                          child:
-                              const Center(child: CircularProgressIndicator()),
-                        ),
-                        errorWidget: (_, __, ___) => Container(
-                          color: MomentoTheme.softPink.withValues(alpha: 0.3),
-                          child: const Icon(Icons.broken_image, size: 48),
-                        ),
-                      ),
-                      if (post.isVideo)
-                        const Positioned.fill(
-                          child: IgnorePointer(child: _VideoPlayBadge()),
-                        ),
-                    ],
+                  child: CachedNetworkImage(
+                    imageUrl: post.imageUrl,
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                    fadeInDuration: const Duration(milliseconds: 350),
+                    placeholder: (_, __) => Container(
+                      color: MomentoTheme.softPink.withValues(alpha: 0.3),
+                      child:
+                          const Center(child: CircularProgressIndicator()),
+                    ),
+                    errorWidget: (_, __, ___) => Container(
+                      color: MomentoTheme.softPink.withValues(alpha: 0.3),
+                      child: const Icon(Icons.broken_image, size: 48),
+                    ),
                   ),
                 ),
               ),
@@ -519,26 +533,3 @@ class _PostCard extends StatelessWidget {
   }
 }
 
-/// Centered translucent play button shown over the poster of a video post.
-class _VideoPlayBadge extends StatelessWidget {
-  const _VideoPlayBadge();
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Container(
-        width: 64,
-        height: 64,
-        decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.45),
-          shape: BoxShape.circle,
-        ),
-        child: const Icon(
-          Icons.play_arrow_rounded,
-          color: Colors.white,
-          size: 40,
-        ),
-      ),
-    );
-  }
-}

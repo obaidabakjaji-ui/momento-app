@@ -8,6 +8,8 @@ import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
 import '../../services/room_service.dart';
 import '../../services/storage_service.dart';
+import '../../services/location_service.dart';
+import '../../services/moderation_service.dart';
 import '../../models/app_user.dart';
 import '../../models/room.dart';
 import '../../models/join_request.dart';
@@ -27,8 +29,11 @@ class _RoomSettingsScreenState extends State<RoomSettingsScreen> {
   final _firestore = FirestoreService();
   final _rooms = RoomService();
   final _storage = StorageService();
+  final _location = LocationService();
+  final _moderation = ModerationService();
   final _picker = ImagePicker();
   bool _uploadingPhoto = false;
+  bool _settingLocation = false;
 
   @override
   Widget build(BuildContext context) {
@@ -70,6 +75,10 @@ class _RoomSettingsScreenState extends State<RoomSettingsScreen> {
                 const SizedBox(height: 8),
                 _buildModerationCard(room),
                 const SizedBox(height: 24),
+                _sectionTitle(l.roomSettingsLocationLock),
+                const SizedBox(height: 8),
+                _buildLocationLockCard(room),
+                const SizedBox(height: 24),
               ],
               if (isAdmin && room.visibility == RoomVisibility.permission) ...[
                 _sectionTitle(l.roomSettingsPendingJoinRequests),
@@ -91,6 +100,16 @@ class _RoomSettingsScreenState extends State<RoomSettingsScreen> {
                     side: const BorderSide(color: Colors.red),
                   ),
                 ),
+              const SizedBox(height: 12),
+              TextButton.icon(
+                onPressed: () => _confirmReport(room),
+                icon: const Icon(Icons.flag_outlined, size: 18),
+                label: Text(l.roomSettingsReportRoom),
+                style: TextButton.styleFrom(
+                  foregroundColor:
+                      MomentoTheme.deepPlum.withValues(alpha: 0.6),
+                ),
+              ),
               if (isAdmin) ...[
                 const SizedBox(height: 12),
                 OutlinedButton.icon(
@@ -343,6 +362,193 @@ class _RoomSettingsScreenState extends State<RoomSettingsScreen> {
         ],
       ),
     );
+  }
+
+  Widget _buildLocationLockCard(Room room) {
+    final l = AppLocalizations.of(context);
+    final hasPin = room.locationLat != null && room.locationLng != null;
+    final radii = const [50, 200, 500, 1000, 5000];
+    final selectedRadius = room.locationRadiusM ?? 200;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SwitchListTile(
+            value: room.locationLockEnabled,
+            onChanged: (v) async {
+              try {
+                if (v) {
+                  // Enabling without a pin doesn't make sense — kick the user
+                  // straight into "use my current location" so they end up
+                  // in a coherent state.
+                  if (!hasPin) {
+                    await _pinCurrentLocation(room, radiusM: selectedRadius);
+                  } else {
+                    await _rooms.setLocationLock(
+                      roomId: room.id,
+                      lat: room.locationLat!,
+                      lng: room.locationLng!,
+                      radiusM: selectedRadius,
+                    );
+                  }
+                } else {
+                  await _rooms.clearLocationLock(roomId: room.id);
+                }
+              } catch (e) {
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Save failed: $e')),
+                );
+              }
+            },
+            activeThumbColor: MomentoTheme.coral,
+            title: Text(
+              l.roomSettingsLocationLockToggle,
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                color: MomentoTheme.deepPlum,
+              ),
+            ),
+            subtitle: Text(
+              l.roomSettingsLocationLockDescription,
+              style: TextStyle(
+                fontSize: 12,
+                color: MomentoTheme.deepPlum.withValues(alpha: 0.6),
+              ),
+            ),
+          ),
+          if (room.locationLockEnabled) ...[
+            const Divider(height: 1),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+              child: Row(
+                children: [
+                  Icon(
+                    hasPin ? Icons.place : Icons.location_disabled,
+                    size: 18,
+                    color: hasPin
+                        ? MomentoTheme.coral
+                        : MomentoTheme.deepPlum.withValues(alpha: 0.4),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      hasPin
+                          ? l.roomSettingsLocationPinSet(
+                              room.locationLat!.toStringAsFixed(5),
+                              room.locationLng!.toStringAsFixed(5),
+                            )
+                          : l.roomSettingsLocationPinNotSet,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: MomentoTheme.deepPlum.withValues(alpha: 0.7),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
+              child: TextButton.icon(
+                onPressed: _settingLocation
+                    ? null
+                    : () => _pinCurrentLocation(
+                          room,
+                          radiusM: selectedRadius,
+                        ),
+                icon: _settingLocation
+                    ? const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.my_location, size: 18),
+                label: Text(l.roomSettingsLocationUseCurrent),
+              ),
+            ),
+            const Divider(height: 1),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+              child: Text(
+                l.roomSettingsLocationRadius,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: MomentoTheme.deepPlum.withValues(alpha: 0.7),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+              child: Wrap(
+                spacing: 8,
+                children: radii.map((m) {
+                  return ChoiceChip(
+                    label: Text(_radiusLabel(m)),
+                    selected: selectedRadius == m,
+                    onSelected: hasPin
+                        ? (_) => _rooms.setLocationLock(
+                              roomId: room.id,
+                              lat: room.locationLat!,
+                              lng: room.locationLng!,
+                              radiusM: m,
+                            )
+                        : null,
+                  );
+                }).toList(),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  String _radiusLabel(int meters) =>
+      meters < 1000 ? '$meters m' : '${meters ~/ 1000} km';
+
+  Future<void> _pinCurrentLocation(Room room, {required int radiusM}) async {
+    final l = AppLocalizations.of(context);
+    setState(() => _settingLocation = true);
+    try {
+      final result = await _location.getCurrentPosition();
+      if (!mounted) return;
+      if (!result.ok) {
+        final msg = switch (result.failure!) {
+          LocationFailure.servicesDisabled =>
+            l.roomSettingsLocationFailedServices,
+          LocationFailure.permissionDenied =>
+            l.roomSettingsLocationFailedPermission,
+          LocationFailure.permissionDeniedForever =>
+            l.roomSettingsLocationFailedPermissionForever,
+          LocationFailure.timeout => l.roomSettingsLocationFailedTimeout,
+          LocationFailure.unknown => l.roomSettingsLocationFailedUnknown,
+        };
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+        return;
+      }
+      try {
+        await _rooms.setLocationLock(
+          roomId: room.id,
+          lat: result.lat!,
+          lng: result.lng!,
+          radiusM: radiusM,
+        );
+      } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Save failed: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _settingLocation = false);
+    }
   }
 
   Widget _buildJoinRequests(Room room) {
@@ -685,6 +891,64 @@ class _RoomSettingsScreenState extends State<RoomSettingsScreen> {
         userId: _auth.currentUser!.uid,
       );
       if (mounted) Navigator.of(context).popUntil((r) => r.isFirst);
+    }
+  }
+
+  Future<void> _confirmReport(Room room) async {
+    final l = AppLocalizations.of(context);
+    final reasonController = TextEditingController();
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l.roomSettingsReportTitle),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l.roomSettingsReportBody),
+            const SizedBox(height: 12),
+            TextField(
+              controller: reasonController,
+              maxLines: 3,
+              minLines: 2,
+              maxLength: 280,
+              decoration: InputDecoration(
+                hintText: l.roomSettingsReportReasonHint,
+                border: const OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l.commonCancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: Text(l.roomSettingsReportSubmit),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await _moderation.reportRoom(
+        reporterId: _auth.currentUser!.uid,
+        roomId: room.id,
+        reason: reasonController.text.trim().isEmpty
+            ? null
+            : reasonController.text.trim(),
+      );
+      messenger.showSnackBar(
+        SnackBar(content: Text(l.roomSettingsReportSent)),
+      );
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(l.commonFailedWithError(e.toString()))),
+      );
     }
   }
 

@@ -174,6 +174,40 @@ class AppLocalizationsIt extends AppLocalizations {
       'Ogni foto scade automaticamente. Scatta, condividi e vai avanti — nessun archivio, nessuna pressione.';
 
   @override
+  String get onboardingWidgetTitle => 'Sulla tua schermata Home';
+
+  @override
+  String get onboardingWidgetBody =>
+      'Aggiungi il widget Huddlex alla schermata Home e i tuoi ultimi huddle scorreranno tutto il giorno.';
+
+  @override
+  String get onboardingLocationLockTitle => 'Fissa un luogo (opzionale)';
+
+  @override
+  String get onboardingLocationLockBody =>
+      'Gli admin delle comunità possono limitare la pubblicazione a un luogo reale — una lezione, un evento, un ritrovo. I post da fuori dell\'area necessitano prima dell\'approvazione.';
+
+  @override
+  String get roomSettingsReportRoom => 'Segnala questa comunità';
+
+  @override
+  String get roomSettingsReportTitle => 'Segnalare questa comunità?';
+
+  @override
+  String get roomSettingsReportBody =>
+      'Il nostro team esaminerà questa comunità. Puoi continuare a usarla nel frattempo — esci da qui se preferisci non vederla più.';
+
+  @override
+  String get roomSettingsReportReasonHint =>
+      'Cosa c\'è che non va? (facoltativo)';
+
+  @override
+  String get roomSettingsReportSubmit => 'Invia segnalazione';
+
+  @override
+  String get roomSettingsReportSent => 'Grazie — daremo un\'occhiata.';
+
+  @override
   String get onboardingSkip => 'Salta';
 
   @override
@@ -413,6 +447,69 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get roomSettingsNoPending => 'Nessuna richiesta in sospeso';
+
+  @override
+  String get roomSettingsLocationLock => 'Blocco di posizione';
+
+  @override
+  String get roomSettingsLocationLockToggle =>
+      'Limita la pubblicazione a un luogo';
+
+  @override
+  String get roomSettingsLocationLockDescription =>
+      'Quando attivo, i post da fuori dell\'area fissata richiedono l\'approvazione di un admin. Gli admin pubblicano sempre subito.';
+
+  @override
+  String roomSettingsLocationPinSet(String lat, String lng) {
+    return 'Fissato a $lat, $lng';
+  }
+
+  @override
+  String get roomSettingsLocationPinNotSet => 'Nessun punto fissato';
+
+  @override
+  String get roomSettingsLocationUseCurrent => 'Fissa la mia posizione attuale';
+
+  @override
+  String get roomSettingsLocationRadius => 'Raggio consentito';
+
+  @override
+  String get roomSettingsLocationFailedServices =>
+      'Attiva i servizi di posizione per fissare il punto.';
+
+  @override
+  String get roomSettingsLocationFailedPermission =>
+      'Autorizzazione alla posizione negata.';
+
+  @override
+  String get roomSettingsLocationFailedPermissionForever =>
+      'L\'autorizzazione alla posizione è stata negata in modo permanente. Apri le Impostazioni per attivarla.';
+
+  @override
+  String get roomSettingsLocationFailedTimeout =>
+      'Impossibile leggere la posizione in tempo. Riprova all\'aperto.';
+
+  @override
+  String get roomSettingsLocationFailedUnknown =>
+      'Impossibile leggere la tua posizione.';
+
+  @override
+  String get accountFeedback => 'Invia feedback';
+
+  @override
+  String get accountFeedbackSubtitle =>
+      'Bug, idea o un grazie — leggiamo tutto';
+
+  @override
+  String get accountFeedbackSubject => 'Feedback Huddlex';
+
+  @override
+  String get accountFeedbackBody =>
+      'Ciao! Ecco cosa è successo / cosa mi piacerebbe vedere:\n\n';
+
+  @override
+  String get accountFeedbackFailedToOpen =>
+      'Impossibile aprire la tua app email. Scrivici a obaidabakjaji@gmail.com.';
 
   @override
   String get roomSettingsTrustedTag => 'Fidato — salta l\'approvazione';
@@ -746,6 +843,19 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get postActionsBlock => 'Blocca';
+
+  @override
+  String get postActionsDelete => 'Elimina questo huddle';
+
+  @override
+  String get postActionsDeleteTitle => 'Eliminare questo huddle?';
+
+  @override
+  String get postActionsDeleteBody =>
+      'Sarà rimosso dalla comunità immediatamente. Operazione irreversibile.';
+
+  @override
+  String get postActionsDeleted => 'Eliminato.';
 
   @override
   String likedByCount(int count) {

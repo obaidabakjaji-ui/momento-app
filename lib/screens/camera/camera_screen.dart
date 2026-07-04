@@ -1,23 +1,24 @@
+import 'dart:async' show unawaited;
 import 'dart:io';
+import 'dart:ui' show ImageFilter;
+import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show HapticFeedback;
+import 'package:image/image.dart' as img;
 import 'package:image_picker/image_picker.dart';
-import 'package:video_compress/video_compress.dart';
-import 'package:video_thumbnail/video_thumbnail.dart';
-import 'package:video_player/video_player.dart';
 import 'package:path_provider/path_provider.dart';
 import '../../l10n/app_localizations.dart';
 import '../../services/auth_service.dart';
 import '../../services/storage_service.dart';
 import '../../services/room_service.dart';
+import '../../services/location_service.dart';
+import '../../services/widget_service.dart';
 import '../../models/app_user.dart';
 import '../../models/room.dart';
-import '../../models/room_post.dart';
 import '../../theme.dart';
 
 /// What the user picked as the post target.
 enum _Target { active, all, custom }
-
-const _maxVideoSeconds = 6;
 
 class CameraScreen extends StatefulWidget {
   const CameraScreen({super.key});
@@ -30,15 +31,10 @@ class _CameraScreenState extends State<CameraScreen> {
   final _auth = AuthService();
   final _storage = StorageService();
   final _roomService = RoomService();
+  final _location = LocationService();
   final _picker = ImagePicker();
 
-  // Either photo OR video is selected at a time.
   File? _imageFile;
-  File? _videoFile; // muted, compressed mp4 ready to upload
-  File? _videoPosterFile; // jpg poster for the video
-  VideoPlayerController? _videoPreview;
-
-  bool _processingVideo = false;
   bool _sending = false;
   bool _loading = true;
 
@@ -49,10 +45,21 @@ class _CameraScreenState extends State<CameraScreen> {
   final Set<String> _customSelection = {};
   final _captionController = TextEditingController();
 
+  CameraController? _cameraController;
+  List<CameraDescription> _availableCameras = const [];
+  int _activeCameraIndex = 0;
+  bool _cameraInitializing = false;
+  FlashMode _flashMode = FlashMode.off;
+
+  // Visual feedback for the shutter press: scale-down on touch and a brief
+  // white-flash overlay on the preview when the photo actually fires.
+  bool _shutterPressed = false;
+  double _captureFlash = 0;
+
   @override
   void dispose() {
     _captionController.dispose();
-    _videoPreview?.dispose();
+    _cameraController?.dispose();
     super.dispose();
   }
 
@@ -81,10 +88,111 @@ class _CameraScreenState extends State<CameraScreen> {
       }
       _loading = false;
     });
+    if (user.roomIds.isNotEmpty) {
+      await _initCamera();
+    }
   }
 
-  bool get _hasMedia => _imageFile != null || _videoFile != null;
-  bool get _isVideo => _videoFile != null;
+  Future<void> _initCamera({int? preferredIndex}) async {
+    if (_cameraInitializing) return;
+    setState(() => _cameraInitializing = true);
+
+    try {
+      if (_availableCameras.isEmpty) {
+        _availableCameras = await availableCameras();
+      }
+      if (_availableCameras.isEmpty) {
+        setState(() => _cameraInitializing = false);
+        return;
+      }
+
+      if (preferredIndex != null) {
+        _activeCameraIndex = preferredIndex;
+      } else {
+        final rearIndex = _availableCameras.indexWhere(
+          (c) => c.lensDirection == CameraLensDirection.back,
+        );
+        _activeCameraIndex = rearIndex >= 0 ? rearIndex : 0;
+      }
+
+      await _cameraController?.dispose();
+      final controller = CameraController(
+        _availableCameras[_activeCameraIndex],
+        ResolutionPreset.high,
+        enableAudio: false,
+      );
+      await controller.initialize();
+      try {
+        await controller.setFlashMode(_flashMode);
+      } catch (_) {
+        // Front cameras often don't support flash — ignore.
+      }
+      if (!mounted) {
+        await controller.dispose();
+        return;
+      }
+      setState(() {
+        _cameraController = controller;
+        _cameraInitializing = false;
+      });
+    } catch (_) {
+      if (mounted) {
+        setState(() => _cameraInitializing = false);
+      }
+    }
+  }
+
+  Future<void> _toggleCamera() async {
+    if (_availableCameras.length < 2) return;
+    final next = (_activeCameraIndex + 1) % _availableCameras.length;
+    await _initCamera(preferredIndex: next);
+  }
+
+  Future<void> _toggleFlash() async {
+    final controller = _cameraController;
+    if (controller == null || !controller.value.isInitialized) return;
+    final next =
+        _flashMode == FlashMode.off ? FlashMode.torch : FlashMode.off;
+    try {
+      await controller.setFlashMode(next);
+      setState(() => _flashMode = next);
+    } catch (_) {
+      // Some cameras (front-facing) reject flash mode changes — ignore.
+    }
+  }
+
+  Future<void> _disposeCamera() async {
+    final c = _cameraController;
+    _cameraController = null;
+    if (c != null) await c.dispose();
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _captureFromLiveCamera() async {
+    final controller = _cameraController;
+    if (controller == null || !controller.value.isInitialized) return;
+    if (controller.value.isTakingPicture) return;
+    HapticFeedback.mediumImpact();
+    // White flash overlay: spike to ~70% then fade to 0 over ~140ms. The
+    // AnimatedOpacity in the Stack handles the actual fade.
+    setState(() => _captureFlash = 0.7);
+    try {
+      final xfile = await controller.takePicture();
+      final cropped = await _cropToSquare(File(xfile.path));
+      if (cropped != null && mounted) {
+        _clearMedia();
+        await _disposeCamera();
+        setState(() => _imageFile = cropped);
+      }
+    } catch (_) {
+      // Capture can fail if the sensor was reclaimed — swallow and let
+      // the user retry.
+    } finally {
+      if (mounted) setState(() => _captureFlash = 0);
+    }
+  }
+
+  bool get _hasMedia => _imageFile != null;
 
   List<String> _resolveTargetRoomIds() {
     if (_user == null) return const [];
@@ -98,19 +206,6 @@ class _CameraScreenState extends State<CameraScreen> {
     }
   }
 
-  Future<void> _takePhoto() async {
-    final picked = await _picker.pickImage(
-      source: ImageSource.camera,
-      maxWidth: 1080,
-      maxHeight: 1080,
-      imageQuality: 85,
-    );
-    if (picked != null && mounted) {
-      _clearMedia();
-      setState(() => _imageFile = File(picked.path));
-    }
-  }
-
   Future<void> _pickFromGallery() async {
     final picked = await _picker.pickImage(
       source: ImageSource.gallery,
@@ -118,108 +213,56 @@ class _CameraScreenState extends State<CameraScreen> {
       maxHeight: 1080,
       imageQuality: 85,
     );
-    if (picked != null && mounted) {
+    if (picked == null) return;
+    final cropped = await _cropToSquare(File(picked.path));
+    if (cropped != null && mounted) {
       _clearMedia();
-      setState(() => _imageFile = File(picked.path));
+      setState(() => _imageFile = cropped);
     }
   }
 
-  Future<void> _recordVideo() async {
-    final picked = await _picker.pickVideo(
-      source: ImageSource.camera,
-      maxDuration: const Duration(seconds: _maxVideoSeconds),
-    );
-    if (picked == null) return;
-    await _processPickedVideo(File(picked.path));
-  }
-
-  Future<void> _pickVideoFromGallery() async {
-    final picked = await _picker.pickVideo(
-      source: ImageSource.gallery,
-      maxDuration: const Duration(seconds: _maxVideoSeconds),
-    );
-    if (picked == null) return;
-    await _processPickedVideo(File(picked.path));
-  }
-
-  /// Strip audio + compress to a sane size, then extract a poster frame
-  /// from the middle of the clip.
-  Future<void> _processPickedVideo(File rawVideo) async {
-    if (!mounted) return;
-    final l = AppLocalizations.of(context);
-    _clearMedia();
-    setState(() => _processingVideo = true);
+  /// Centers a square crop on the picked image and re-encodes as JPEG.
+  ///
+  /// Two reasons we do this client-side rather than letting the widget
+  /// crop at render time:
+  ///   1. Widget surface is square (Android 2×2 / iOS systemSmall), so a
+  ///      non-square source gets edge-cropped by ImageView.centerCrop and
+  ///      the user has no control over what gets cut.
+  ///   2. `image.decodeImage()` honours EXIF orientation, so a portrait
+  ///      iPhone shot ends up the right way up — Android's BitmapFactory
+  ///      in the widget process does NOT auto-apply EXIF, which is why
+  ///      portrait photos sometimes appeared sideways on the home screen.
+  Future<File?> _cropToSquare(File source) async {
     try {
-      // Compress + remove audio. MediumQuality keeps clips small while still
-      // looking sharp on phones.
-      final compressed = await VideoCompress.compressVideo(
-        rawVideo.path,
-        quality: VideoQuality.MediumQuality,
-        deleteOrigin: false,
-        includeAudio: false,
+      final bytes = await source.readAsBytes();
+      final decoded = img.decodeImage(bytes);
+      if (decoded == null) return null;
+
+      final size =
+          decoded.width < decoded.height ? decoded.width : decoded.height;
+      final x = (decoded.width - size) ~/ 2;
+      final y = (decoded.height - size) ~/ 2;
+      final square = img.copyCrop(
+        decoded,
+        x: x,
+        y: y,
+        width: size,
+        height: size,
       );
-      if (compressed == null || compressed.file == null) {
-        throw Exception(l.cameraCouldNotProcessVideo);
-      }
 
-      // Hard-cap at 6s in case the source was longer than image_picker honored
-      // (some Android cameras ignore maxDuration).
-      final durationMs = compressed.duration?.toInt() ?? 0;
-      if (durationMs > (_maxVideoSeconds + 1) * 1000) {
-        await VideoCompress.deleteAllCache();
-        throw Exception(l.cameraVideoTooLong);
-      }
-
-      // Poster from a frame near the middle (more interesting than the very
-      // first frame, which is often a black/exposure-adjusting frame).
-      final mid = (durationMs / 2).round();
-      final posterDir = await getTemporaryDirectory();
-      final posterBytes = await VideoThumbnail.thumbnailData(
-        video: compressed.file!.path,
-        imageFormat: ImageFormat.JPEG,
-        timeMs: mid,
-        quality: 80,
-        maxWidth: 1080,
-      );
-      if (posterBytes == null) {
-        throw Exception(l.cameraCouldNotPoster);
-      }
-      final posterFile = File(
-          '${posterDir.path}/momento-poster-${DateTime.now().millisecondsSinceEpoch}.jpg');
-      await posterFile.writeAsBytes(posterBytes);
-
-      final preview = VideoPlayerController.file(compressed.file!);
-      await preview.initialize();
-      preview.setLooping(true);
-      preview.play();
-
-      if (!mounted) {
-        await preview.dispose();
-        return;
-      }
-      setState(() {
-        _videoFile = compressed.file;
-        _videoPosterFile = posterFile;
-        _videoPreview = preview;
-      });
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('$e'.replaceFirst('Exception: ', ''))),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _processingVideo = false);
+      final tmpDir = await getTemporaryDirectory();
+      final outPath =
+          '${tmpDir.path}/huddle_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final outFile = File(outPath);
+      await outFile.writeAsBytes(img.encodeJpg(square, quality: 88));
+      return outFile;
+    } catch (_) {
+      return source;
     }
   }
 
   void _clearMedia() {
-    _videoPreview?.pause();
-    _videoPreview?.dispose();
     _imageFile = null;
-    _videoFile = null;
-    _videoPosterFile = null;
-    _videoPreview = null;
   }
 
   Future<void> _send() async {
@@ -235,25 +278,30 @@ class _CameraScreenState extends State<CameraScreen> {
 
     setState(() => _sending = true);
     try {
-      late final String imageUrl;
-      String? videoUrl;
-      var mediaType = PostMediaType.photo;
-
-      if (_isVideo) {
-        final result = await _storage.uploadMomentoVideo(
-          senderId: _user!.uid,
-          videoFile: _videoFile!,
-          posterFile: _videoPosterFile!,
-        );
-        imageUrl = result.posterUrl;
-        videoUrl = result.videoUrl;
-        mediaType = PostMediaType.video;
-      } else {
-        imageUrl = await _storage.uploadMomentoImage(
-          senderId: _user!.uid,
-          imageFile: _imageFile!,
-        );
+      // If any target room has the location lock active, grab GPS so
+      // postToRooms can decide live vs. pending per-room. We skip GPS
+      // entirely when no target uses the lock, so the user is never
+      // prompted for location they don't need.
+      final targetRooms = _userRooms.where((r) => targets.contains(r.id));
+      final anyLocked =
+          targetRooms.any((r) => r.hasActiveLocationLock && !r.isAdmin(_user!.uid));
+      double? senderLat;
+      double? senderLng;
+      if (anyLocked) {
+        final loc = await _location.getCurrentPosition();
+        if (loc.ok) {
+          senderLat = loc.lat;
+          senderLng = loc.lng;
+        }
+        // If lookup failed we proceed without coords: the geofence treats
+        // unknown GPS as out-of-area, so the post lands as pending. That's
+        // the right default — admins still see it and can approve.
       }
+
+      final imageUrl = await _storage.uploadMomentoImage(
+        senderId: _user!.uid,
+        imageFile: _imageFile!,
+      );
 
       final caption = _captionController.text.trim();
       final result = await _roomService.postToRooms(
@@ -262,10 +310,17 @@ class _CameraScreenState extends State<CameraScreen> {
         senderName: _user!.displayName,
         senderPhotoUrl: _user!.photoUrl,
         imageUrl: imageUrl,
-        videoUrl: videoUrl,
-        mediaType: mediaType,
         caption: caption.isEmpty ? null : caption,
+        senderLat: senderLat,
+        senderLng: senderLng,
       );
+      // Force the home-screen widget to pull the new post immediately. The
+      // feed StreamBuilder normally handles this, but on cold-start +
+      // pop-and-rebuild the rebuild can race the widget's auto-refresh and
+      // the user sees stale data for tens of seconds. force: true bypasses
+      // the refresh throttle — the user just posted and expects the widget
+      // to update now. Fire-and-forget so the snackbar/pop don't wait.
+      unawaited(WidgetService().refreshForUser(_user!.uid, force: true));
       if (mounted) {
         String message;
         if (result.pending == 0) {
@@ -295,12 +350,20 @@ class _CameraScreenState extends State<CameraScreen> {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     if (_loading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const Scaffold(
+        backgroundColor: _kCameraBg,
+        body: Center(child: CircularProgressIndicator(color: Colors.white)),
+      );
     }
 
     if (_user == null || _user!.roomIds.isEmpty) {
       return Scaffold(
-        appBar: AppBar(title: Text(l.cameraTitle)),
+        backgroundColor: _kCameraBg,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          iconTheme: const IconThemeData(color: Colors.white),
+        ),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(32),
@@ -308,7 +371,9 @@ class _CameraScreenState extends State<CameraScreen> {
               l.cameraNoRooms,
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: MomentoTheme.deepPlum.withValues(alpha: 0.6),
+                color: Colors.white.withValues(alpha: 0.7),
+                fontSize: 15,
+                height: 1.4,
               ),
             ),
           ),
@@ -317,286 +382,490 @@ class _CameraScreenState extends State<CameraScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: Text(l.cameraTitle)),
-      body: Column(
-        children: [
-          Expanded(child: _buildPreviewArea()),
-          if (_hasMedia) _buildCaptionField(),
-          if (_hasMedia) _buildTargetPicker(),
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: !_hasMedia ? _buildPickerButtons() : _buildSendButtons(),
-          ),
-        ],
-      ),
+      backgroundColor: _kCameraBg,
+      resizeToAvoidBottomInset: true,
+      body: _hasMedia ? _buildReviewScreen() : _buildLiveCameraScreen(),
     );
   }
 
-  Widget _buildPreviewArea() {
-    final l = AppLocalizations.of(context);
-    if (_processingVideo) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const CircularProgressIndicator(),
-            const SizedBox(height: 16),
-            Text(l.cameraProcessingVideo),
-          ],
-        ),
-      );
-    }
-    if (_imageFile != null) {
-      return Padding(
-        padding: const EdgeInsets.all(16),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(20),
-          child: Image.file(
-            _imageFile!,
-            fit: BoxFit.cover,
-            width: double.infinity,
+  /// Edge-to-edge live capture surface.
+  ///
+  /// Layout: dark background → centered 3:2 rounded preview card → floating
+  /// glassy controls overlaid (close + flash on top, gallery + shutter + flip
+  /// on bottom). Everything sits in one Stack so the camera feed never moves.
+  Widget _buildLiveCameraScreen() {
+    return SafeArea(
+      child: Stack(
+        children: [
+          // Centered preview card.
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 72, 16, 200),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(28),
+                child: AspectRatio(
+                  aspectRatio: 3 / 2,
+                  child: _buildLivePreview(),
+                ),
+              ),
+            ),
           ),
-        ),
-      );
-    }
-    if (_videoPreview != null && _videoPreview!.value.isInitialized) {
-      return Padding(
-        padding: const EdgeInsets.all(16),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(20),
-          child: AspectRatio(
-            aspectRatio: _videoPreview!.value.aspectRatio,
-            child: Stack(
-              fit: StackFit.expand,
+          // Top-left close.
+          Positioned(
+            top: 12,
+            left: 16,
+            child: _GlassyIconButton(
+              icon: Icons.close_rounded,
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+          ),
+          // Top-right flash.
+          Positioned(
+            top: 12,
+            right: 16,
+            child: _GlassyIconButton(
+              icon: _flashMode == FlashMode.off
+                  ? Icons.flash_off_rounded
+                  : Icons.flash_on_rounded,
+              tint: _flashMode == FlashMode.off ? null : MomentoTheme.coral,
+              onPressed: _toggleFlash,
+            ),
+          ),
+          // Bottom row: gallery / shutter / flip.
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 28,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                VideoPlayer(_videoPreview!),
-                Positioned(
-                  top: 10,
-                  left: 10,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.55),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.videocam, size: 12, color: Colors.white),
-                        const SizedBox(width: 4),
-                        Text(
-                          l.cameraMuted,
-                          style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600),
-                        ),
-                      ],
-                    ),
-                  ),
+                _GlassyIconButton(
+                  icon: Icons.photo_library_rounded,
+                  onPressed: _pickFromGallery,
+                  size: 52,
+                ),
+                _buildShutter(),
+                _GlassyIconButton(
+                  icon: Icons.flip_camera_ios_rounded,
+                  onPressed: _toggleCamera,
+                  size: 52,
                 ),
               ],
             ),
           ),
+          // Small wordmark, centered up top. Subtle — just enough that the
+          // screen feels branded without competing with the photo.
+          Positioned(
+            top: 22,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: Text(
+                'Huddlex',
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.6),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1.2,
+                ),
+              ),
+            ),
+          ),
+          // White capture flash overlay. AnimatedOpacity fades it out as
+          // soon as _captureFromLiveCamera flips _captureFlash back to 0.
+          Positioned.fill(
+            child: IgnorePointer(
+              child: AnimatedOpacity(
+                opacity: _captureFlash,
+                duration: const Duration(milliseconds: 140),
+                curve: Curves.easeOut,
+                child: Container(color: Colors.white),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLivePreview() {
+    final controller = _cameraController;
+    if (controller == null || !controller.value.isInitialized) {
+      return Container(
+        color: Colors.black,
+        child: const Center(
+          child: CircularProgressIndicator(color: Colors.white),
         ),
       );
     }
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.camera_alt_outlined,
-            size: 80,
-            color: MomentoTheme.deepPlum.withValues(alpha: 0.3),
+    return ClipRect(
+      child: FittedBox(
+        fit: BoxFit.cover,
+        clipBehavior: Clip.hardEdge,
+        child: SizedBox(
+          width: controller.value.previewSize?.height ?? 1,
+          height: controller.value.previewSize?.width ?? 1,
+          child: CameraPreview(controller),
+        ),
+      ),
+    );
+  }
+
+  /// The shutter button. Coral gradient core inside a clean white ring —
+  /// the only on-brand colour on the live screen, so it pops as the primary
+  /// action without shouting. Scales down on touch for tactile feedback.
+  Widget _buildShutter() {
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _shutterPressed = true),
+      onTapUp: (_) => setState(() => _shutterPressed = false),
+      onTapCancel: () => setState(() => _shutterPressed = false),
+      onTap: _captureFromLiveCamera,
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedScale(
+        scale: _shutterPressed ? 0.9 : 1.0,
+        duration: const Duration(milliseconds: 120),
+        curve: Curves.easeOut,
+        child: Container(
+          width: 84,
+          height: 84,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.white, width: 4),
           ),
-          const SizedBox(height: 16),
-          Text(
-            l.cameraCaptureHint,
-            style: TextStyle(
-              color: MomentoTheme.deepPlum.withValues(alpha: 0.5),
-              fontSize: 16,
+          padding: const EdgeInsets.all(5),
+          child: Container(
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(
+                colors: [MomentoTheme.coral, MomentoTheme.warmOrange],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Post-capture review. The photo stays in the same 3:2 rounded card as
+  /// the live preview did (so the transition feels continuous), and the
+  /// caption + target + send live in a glassy panel near the bottom.
+  Widget _buildReviewScreen() {
+    final l = AppLocalizations.of(context);
+    return SafeArea(
+      child: Stack(
+        children: [
+          // Top: captured photo, same size + position as the live preview.
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 72, 16, 280),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(28),
+                child: AspectRatio(
+                  aspectRatio: 3 / 2,
+                  child: _imageFile == null
+                      ? const SizedBox.shrink()
+                      : Image.file(_imageFile!, fit: BoxFit.cover),
+                ),
+              ),
+            ),
+          ),
+          // Top-left retake (acts like close — discards capture, restarts camera).
+          Positioned(
+            top: 12,
+            left: 16,
+            child: _GlassyIconButton(
+              icon: Icons.close_rounded,
+              onPressed: _sending ? null : () => _discardCapture(),
+            ),
+          ),
+          // Bottom panel: caption + target + send.
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: _buildReviewPanel(l),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildPickerButtons() {
-    final l = AppLocalizations.of(context);
-    return Column(
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: ElevatedButton.icon(
-                onPressed: _processingVideo ? null : _takePhoto,
-                icon: const Icon(Icons.camera_alt),
-                label: Text(l.cameraPhoto),
+  Widget _buildReviewPanel(AppLocalizations l) {
+    return ClipRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.35),
+            border: Border(
+              top: BorderSide(
+                color: Colors.white.withValues(alpha: 0.08),
+                width: 0.5,
               ),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: ElevatedButton.icon(
-                onPressed: _processingVideo ? null : _recordVideo,
-                icon: const Icon(Icons.videocam),
-                label: Text(l.cameraVideo),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 10),
-        Row(
-          children: [
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: _processingVideo ? null : _pickFromGallery,
-                icon: const Icon(Icons.photo_library),
-                label: Text(l.cameraPhotoFromGallery),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: _processingVideo ? null : _pickVideoFromGallery,
-                icon: const Icon(Icons.video_library),
-                label: Text(l.cameraVideoFromGallery),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSendButtons() {
-    final l = AppLocalizations.of(context);
-    return Row(
-      children: [
-        Expanded(
-          child: OutlinedButton(
-            onPressed: _sending
-                ? null
-                : () => setState(() {
-                      _clearMedia();
-                    }),
-            child: Text(l.cameraRetake),
           ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          flex: 2,
-          child: ElevatedButton(
-            onPressed: _sending ? null : _send,
-            child: _sending
-                ? const SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
-                    ),
-                  )
-                : Text(_isVideo ? l.cameraPostClip : l.cameraPostMomento),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildCaptionField() {
-    final l = AppLocalizations.of(context);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-      child: TextField(
-        controller: _captionController,
-        maxLength: 140,
-        maxLines: 2,
-        minLines: 1,
-        textInputAction: TextInputAction.done,
-        style: const TextStyle(color: MomentoTheme.deepPlum),
-        decoration: InputDecoration(
-          hintText: l.cameraCaptionHint,
-          filled: true,
-          fillColor: Colors.white,
-          counterText: '',
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: BorderSide.none,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTargetPicker() {
-    final l = AppLocalizations.of(context);
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            l.cameraPostTo,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: MomentoTheme.deepPlum.withValues(alpha: 0.6),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              ChoiceChip(
-                label: Text(
-                    l.cameraActiveRoomsCount(_user!.activeRoomIds.length)),
-                selected: _target == _Target.active,
-                onSelected: (_) => setState(() => _target = _Target.active),
-              ),
-              ChoiceChip(
-                label: Text(l.cameraAllRoomsCount(_user!.roomIds.length)),
-                selected: _target == _Target.all,
-                onSelected: (_) => setState(() => _target = _Target.all),
-              ),
-              ChoiceChip(
-                label: Text(l.cameraPickRooms),
-                selected: _target == _Target.custom,
-                onSelected: (_) => setState(() => _target = _Target.custom),
-              ),
+              _buildCaptionField(l),
+              const SizedBox(height: 12),
+              _buildTargetPills(l),
+              if (_target == _Target.custom) ...[
+                const SizedBox(height: 10),
+                _buildCustomRoomChips(),
+              ],
+              const SizedBox(height: 16),
+              _buildSendButton(l),
             ],
           ),
-          if (_target == _Target.custom) ...[
-            const Divider(height: 24),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: _userRooms.map((room) {
-                final selected = _customSelection.contains(room.id);
-                return FilterChip(
-                  label: Text(room.name),
-                  selected: selected,
-                  onSelected: (v) => setState(() {
-                    if (v) {
-                      _customSelection.add(room.id);
-                    } else {
-                      _customSelection.remove(room.id);
-                    }
-                  }),
-                );
-              }).toList(),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCaptionField(AppLocalizations l) {
+    return TextField(
+      controller: _captionController,
+      maxLength: 140,
+      maxLines: 2,
+      minLines: 1,
+      textInputAction: TextInputAction.done,
+      style: const TextStyle(color: Colors.white, fontSize: 15),
+      decoration: InputDecoration(
+        hintText: l.cameraCaptionHint,
+        hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.45)),
+        filled: true,
+        fillColor: Colors.white.withValues(alpha: 0.08),
+        counterText: '',
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(18),
+          borderSide: BorderSide(
+            color: Colors.white.withValues(alpha: 0.12),
+            width: 0.5,
+          ),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(18),
+          borderSide: BorderSide(
+            color: Colors.white.withValues(alpha: 0.12),
+            width: 0.5,
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(18),
+          borderSide: const BorderSide(color: MomentoTheme.coral, width: 1),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTargetPills(AppLocalizations l) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      alignment: WrapAlignment.center,
+      children: [
+        _targetPill(
+          label: l.cameraActiveRoomsCount(_user!.activeRoomIds.length),
+          selected: _target == _Target.active,
+          onTap: () => setState(() => _target = _Target.active),
+        ),
+        _targetPill(
+          label: l.cameraAllRoomsCount(_user!.roomIds.length),
+          selected: _target == _Target.all,
+          onTap: () => setState(() => _target = _Target.all),
+        ),
+        _targetPill(
+          label: l.cameraPickRooms,
+          selected: _target == _Target.custom,
+          onTap: () => setState(() => _target = _Target.custom),
+        ),
+      ],
+    );
+  }
+
+  Widget _targetPill({
+    required String label,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          decoration: BoxDecoration(
+            color: selected
+                ? MomentoTheme.coral
+                : Colors.white.withValues(alpha: 0.08),
+            border: Border.all(
+              color: selected
+                  ? Colors.transparent
+                  : Colors.white.withValues(alpha: 0.18),
+              width: 0.5,
+            ),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              color: selected
+                  ? Colors.white
+                  : Colors.white.withValues(alpha: 0.85),
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCustomRoomChips() {
+    return Wrap(
+      spacing: 6,
+      runSpacing: 6,
+      alignment: WrapAlignment.center,
+      children: _userRooms.map((room) {
+        final selected = _customSelection.contains(room.id);
+        return _targetPill(
+          label: room.name,
+          selected: selected,
+          onTap: () => setState(() {
+            if (selected) {
+              _customSelection.remove(room.id);
+            } else {
+              _customSelection.add(room.id);
+            }
+          }),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildSendButton(AppLocalizations l) {
+    return SizedBox(
+      width: double.infinity,
+      height: 54,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [MomentoTheme.coral, MomentoTheme.warmOrange],
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+          ),
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: MomentoTheme.coral.withValues(alpha: 0.4),
+              blurRadius: 18,
+              offset: const Offset(0, 6),
             ),
           ],
-        ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: _sending ? null : _send,
+            borderRadius: BorderRadius.circular(18),
+            child: Center(
+              child: _sending
+                  ? const SizedBox(
+                      height: 22,
+                      width: 22,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.5,
+                        color: Colors.white,
+                      ),
+                    )
+                  : Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          l.cameraPostMomento,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.3,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        const Icon(
+                          Icons.arrow_forward_rounded,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                      ],
+                    ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _discardCapture() async {
+    setState(_clearMedia);
+    await _initCamera(preferredIndex: _activeCameraIndex);
+  }
+}
+
+/// The capture surface sits on near-black rather than pure black so the
+/// rounded preview corners and glassy controls have something to read
+/// against. ~Cinema dark.
+const Color _kCameraBg = Color(0xFF0B0B0E);
+
+/// Circular glassy button used for the floating camera controls (close,
+/// flash, gallery, flip). Renders as a translucent disc with a thin border
+/// — the BackdropFilter samples whatever is behind it for the frosted look.
+class _GlassyIconButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback? onPressed;
+  final double size;
+  final Color? tint;
+
+  const _GlassyIconButton({
+    required this.icon,
+    required this.onPressed,
+    this.size = 44,
+    this.tint,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final iconColor = tint ?? Colors.white;
+    return ClipOval(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+        child: Material(
+          color: Colors.white.withValues(alpha: 0.10),
+          child: InkWell(
+            onTap: onPressed,
+            child: Container(
+              width: size,
+              height: size,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.18),
+                  width: 0.5,
+                ),
+              ),
+              alignment: Alignment.center,
+              child: Icon(icon, color: iconColor, size: size * 0.48),
+            ),
+          ),
+        ),
       ),
     );
   }

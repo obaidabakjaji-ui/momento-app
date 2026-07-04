@@ -12,7 +12,6 @@ struct MomentoEntry: TimelineEntry {
     let likeCount: Int
     let createdAt: Date?
     let isFavorite: Bool
-    let isVideo: Bool
     let index: Int
     let total: Int
 }
@@ -32,7 +31,6 @@ struct MomentoProvider: TimelineProvider {
             likeCount: 0,
             createdAt: Date(),
             isFavorite: false,
-            isVideo: false,
             index: 0,
             total: 0
         )
@@ -50,7 +48,7 @@ struct MomentoProvider: TimelineProvider {
             let entry = MomentoEntry(
                 date: Date(), imagePath: "", senderName: "", roomName: "",
                 caption: "", likeCount: 0, createdAt: nil,
-                isFavorite: false, isVideo: false, index: 0, total: 0
+                isFavorite: false, index: 0, total: 0
             )
             let nextUpdate = Calendar.current.date(byAdding: .minute, value: 15, to: Date())!
             completion(Timeline(entries: [entry], policy: .after(nextUpdate)))
@@ -80,7 +78,6 @@ struct MomentoProvider: TimelineProvider {
                 likeCount: original.likeCount,
                 createdAt: original.createdAt,
                 isFavorite: original.isFavorite,
-                isVideo: original.isVideo,
                 index: original.index,
                 total: original.total
             ))
@@ -99,7 +96,6 @@ struct MomentoProvider: TimelineProvider {
         let captions = decodeArray(defaults?.string(forKey: "momento_captions"), of: String.self)
         let likes = decodeArray(defaults?.string(forKey: "momento_likes"), of: Int.self)
         let createdAtsMs = decodeArray(defaults?.string(forKey: "momento_created_ats"), of: Int64.self)
-        let videos = decodeArray(defaults?.string(forKey: "momento_is_videos"), of: Bool.self)
 
         if paths.isEmpty {
             // Legacy single-image fallback
@@ -109,7 +105,7 @@ struct MomentoProvider: TimelineProvider {
             return [MomentoEntry(
                 date: Date(), imagePath: path, senderName: name,
                 roomName: "", caption: "", likeCount: 0,
-                createdAt: nil, isFavorite: false, isVideo: false,
+                createdAt: nil, isFavorite: false,
                 index: 0, total: 1
             )]
         }
@@ -147,7 +143,6 @@ struct MomentoProvider: TimelineProvider {
                 likeCount: i < likes.count ? likes[i] : 0,
                 createdAt: createdAt,
                 isFavorite: i < favs.count ? favs[i] : false,
-                isVideo: i < videos.count ? videos[i] : false,
                 index: entries.count,
                 total: 0 // patched after loop
             ))
@@ -164,7 +159,6 @@ struct MomentoProvider: TimelineProvider {
                 likeCount: e.likeCount,
                 createdAt: e.createdAt,
                 isFavorite: e.isFavorite,
-                isVideo: e.isVideo,
                 index: e.index,
                 total: entries.count
             )
@@ -269,9 +263,6 @@ struct SmallPhotoView: View {
                     }
                 }
 
-                if entry.isVideo {
-                    PlayBadge(size: 44)
-                }
             }
             .frame(width: geo.size.width, height: geo.size.height)
         }
@@ -301,9 +292,6 @@ struct MediumPhotoView: View {
                     endPoint: .trailing
                 )
 
-                if entry.isVideo {
-                    PlayBadge(size: 38)
-                }
             }
             .frame(maxWidth: .infinity)
             .clipped()
@@ -431,23 +419,6 @@ struct BottomLabel: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-    }
-}
-
-/// Centered translucent play glyph shown over a video post's poster.
-struct PlayBadge: View {
-    var size: CGFloat = 40
-
-    var body: some View {
-        ZStack {
-            Circle()
-                .fill(Color.black.opacity(0.45))
-                .frame(width: size, height: size)
-            Image(systemName: "play.fill")
-                .font(.system(size: size * 0.45, weight: .bold))
-                .foregroundColor(.white)
-                .offset(x: size * 0.04) // optical center for triangle glyph
-        }
     }
 }
 

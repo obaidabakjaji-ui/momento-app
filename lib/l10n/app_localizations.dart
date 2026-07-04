@@ -410,6 +410,66 @@ abstract class AppLocalizations {
   /// **'Every photo expires automatically. Snap, share, and move on — no archive, no pressure.'**
   String get onboardingExpireBody;
 
+  /// No description provided for @onboardingWidgetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'On your home screen'**
+  String get onboardingWidgetTitle;
+
+  /// No description provided for @onboardingWidgetBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Drop the Huddlex widget on your home screen and your latest huddles cycle through it all day.'**
+  String get onboardingWidgetBody;
+
+  /// No description provided for @onboardingLocationLockTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pin a place (optional)'**
+  String get onboardingLocationLockTitle;
+
+  /// No description provided for @onboardingLocationLockBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Community admins can lock posting to a real-world spot — a class, an event, a hangout. Posts from outside the area need approval first.'**
+  String get onboardingLocationLockBody;
+
+  /// No description provided for @roomSettingsReportRoom.
+  ///
+  /// In en, this message translates to:
+  /// **'Report this community'**
+  String get roomSettingsReportRoom;
+
+  /// No description provided for @roomSettingsReportTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Report this community?'**
+  String get roomSettingsReportTitle;
+
+  /// No description provided for @roomSettingsReportBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Our team will review this community. You can keep using it while we look — leave it from here if you\'d rather not see it again.'**
+  String get roomSettingsReportBody;
+
+  /// No description provided for @roomSettingsReportReasonHint.
+  ///
+  /// In en, this message translates to:
+  /// **'What\'s wrong here? (optional)'**
+  String get roomSettingsReportReasonHint;
+
+  /// No description provided for @roomSettingsReportSubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'Send report'**
+  String get roomSettingsReportSubmit;
+
+  /// No description provided for @roomSettingsReportSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Thanks — we\'ll take a look.'**
+  String get roomSettingsReportSent;
+
   /// No description provided for @onboardingSkip.
   ///
   /// In en, this message translates to:
@@ -835,6 +895,108 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No pending requests'**
   String get roomSettingsNoPending;
+
+  /// No description provided for @roomSettingsLocationLock.
+  ///
+  /// In en, this message translates to:
+  /// **'Location lock'**
+  String get roomSettingsLocationLock;
+
+  /// No description provided for @roomSettingsLocationLockToggle.
+  ///
+  /// In en, this message translates to:
+  /// **'Lock posting to a place'**
+  String get roomSettingsLocationLockToggle;
+
+  /// No description provided for @roomSettingsLocationLockDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'When on, posts from outside the pinned area need admin approval. Admins always post immediately.'**
+  String get roomSettingsLocationLockDescription;
+
+  /// No description provided for @roomSettingsLocationPinSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Pinned at {lat}, {lng}'**
+  String roomSettingsLocationPinSet(String lat, String lng);
+
+  /// No description provided for @roomSettingsLocationPinNotSet.
+  ///
+  /// In en, this message translates to:
+  /// **'No pin set yet'**
+  String get roomSettingsLocationPinNotSet;
+
+  /// No description provided for @roomSettingsLocationUseCurrent.
+  ///
+  /// In en, this message translates to:
+  /// **'Pin my current location'**
+  String get roomSettingsLocationUseCurrent;
+
+  /// No description provided for @roomSettingsLocationRadius.
+  ///
+  /// In en, this message translates to:
+  /// **'Allowed radius'**
+  String get roomSettingsLocationRadius;
+
+  /// No description provided for @roomSettingsLocationFailedServices.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on location services to set the pin.'**
+  String get roomSettingsLocationFailedServices;
+
+  /// No description provided for @roomSettingsLocationFailedPermission.
+  ///
+  /// In en, this message translates to:
+  /// **'Location permission denied.'**
+  String get roomSettingsLocationFailedPermission;
+
+  /// No description provided for @roomSettingsLocationFailedPermissionForever.
+  ///
+  /// In en, this message translates to:
+  /// **'Location permission was permanently denied. Open Settings to enable it.'**
+  String get roomSettingsLocationFailedPermissionForever;
+
+  /// No description provided for @roomSettingsLocationFailedTimeout.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t read your location in time. Try again outdoors.'**
+  String get roomSettingsLocationFailedTimeout;
+
+  /// No description provided for @roomSettingsLocationFailedUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t read your location.'**
+  String get roomSettingsLocationFailedUnknown;
+
+  /// No description provided for @accountFeedback.
+  ///
+  /// In en, this message translates to:
+  /// **'Send feedback'**
+  String get accountFeedback;
+
+  /// No description provided for @accountFeedbackSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Bug, idea, or a thank-you — we read everything'**
+  String get accountFeedbackSubtitle;
+
+  /// No description provided for @accountFeedbackSubject.
+  ///
+  /// In en, this message translates to:
+  /// **'Huddlex feedback'**
+  String get accountFeedbackSubject;
+
+  /// No description provided for @accountFeedbackBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Hey! Here\'s what happened / what I\'d love to see:\n\n'**
+  String get accountFeedbackBody;
+
+  /// No description provided for @accountFeedbackFailedToOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t open your email app. Please write to obaidabakjaji@gmail.com.'**
+  String get accountFeedbackFailedToOpen;
 
   /// No description provided for @roomSettingsTrustedTag.
   ///
@@ -1369,6 +1531,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Block'**
   String get postActionsBlock;
+
+  /// No description provided for @postActionsDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this huddle'**
+  String get postActionsDelete;
+
+  /// No description provided for @postActionsDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this huddle?'**
+  String get postActionsDeleteTitle;
+
+  /// No description provided for @postActionsDeleteBody.
+  ///
+  /// In en, this message translates to:
+  /// **'It\'ll be removed from the community immediately. This can\'t be undone.'**
+  String get postActionsDeleteBody;
+
+  /// No description provided for @postActionsDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted.'**
+  String get postActionsDeleted;
 
   /// No description provided for @likedByCount.
   ///
