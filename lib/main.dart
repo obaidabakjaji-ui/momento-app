@@ -53,18 +53,23 @@ void main() async {
   await WidgetService().initialize();
   await LocaleService.instance.load();
 
-  // Schedule a periodic widget refresh so the home-screen widget stays
-  // fresh even when the user hasn't opened the app for a while. Android
-  // honours the periodicity reliably (WorkManager). iOS is opportunistic —
-  // Apple decides when to actually run BGTasks, so it can be hours apart;
-  // that's expected, not a bug.
+  // Schedule a periodic widget refresh so the home-screen widget picks up
+  // friends' new posts even when the user hasn't opened the app. 15 min is
+  // WorkManager's minimum periodic interval; the persisted-signature dedup
+  // in WidgetService makes no-change polls nearly free (a few Firestore
+  // reads, no image downloads, no widget re-render). Expired-photo REMOVAL
+  // does not depend on this at all — the Kotlin receiver self-schedules an
+  // exact-ish expiry alarm locally. iOS is opportunistic — Apple decides
+  // when BG tasks actually run; that's expected, not a bug.
+  // `replace` (not `keep`): the policy change from the old 1h period only
+  // takes effect if the existing scheduled task is replaced.
   await Workmanager().initialize(widgetBackgroundCallback);
   await Workmanager().registerPeriodicTask(
     widgetRefreshTaskName,
     widgetRefreshTaskName,
-    frequency: const Duration(hours: 1),
+    frequency: const Duration(minutes: 15),
     constraints: Constraints(networkType: NetworkType.connected),
-    existingWorkPolicy: ExistingPeriodicWorkPolicy.keep,
+    existingWorkPolicy: ExistingPeriodicWorkPolicy.replace,
   );
 
   runApp(const MomentoApp());

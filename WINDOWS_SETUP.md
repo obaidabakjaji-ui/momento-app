@@ -67,27 +67,20 @@ adb logcat | findstr /i "HuddlexWidget WidgetService flutter"
 
 ## 4. ⚠ Current state — read before doing anything
 
-### TESTING values left in the code (revert before any tester build!)
-Post expiry is temporarily **30 seconds** instead of 6 hours, in two places,
-both marked `TESTING ONLY`:
-- `lib/services/room_service.dart` → `Duration(seconds: 30)` → revert to
-  `Duration(hours: 6)`
-- `android/app/src/main/kotlin/com/momento/momento/MomentoWidgetReceiver.kt`
-  → `30L * 1000L` → revert to `6L * 60L * 60L * 1000L`
-
-### Open bug (unresolved at handoff)
-**Posting fails with "Firebase Storage: unknown error".** Appeared on the
-last installed build; not yet diagnosed. Top suspect: App Check enforcement
-was flipped on for Cloud Storage in Firebase Console (sideloaded release
-builds fail Play Integrity attestation). Check Firebase Console → App Check →
-APIs → Cloud Storage; if "Enforced", set to Unenforced and retry posting.
-If that's not it: reproduce while running `adb logcat` and look for
-`StorageException` / HTTP status lines.
-
-### Not-yet-verified on device
-- The widget fix "photos not appearing until 3rd post" (download-retry +
-  force-refresh after posting) — built + installed but blocked from testing
-  by the Storage bug above.
+### Resolved since first handoff (2026-07-04)
+- **"Firebase Storage: unknown error" on posting** — root cause was the
+  Google Cloud free trial expiring: billing account state "closed" → Storage
+  returns HTTP 402 for everything. Fixed by reactivating billing at
+  console.cloud.google.com/billing. If uploads ever fail with "unknown
+  error" again, check billing state FIRST.
+- **Widget expiry pipeline verified on device** (tested with a temporary
+  30-second lifetime, since reverted to 6h): posts appear on the widget
+  immediately after posting, and expired posts are removed on the next
+  refresh trigger (posting / app-foreground / hourly job). Known + accepted
+  trade-off: with the phone untouched, expired photos can linger on the
+  widget until the next hourly tick — no exact-time alarm by design.
+- **"Photos not appearing until 3rd post" fix verified** — download-retry
+  + force-refresh after posting works.
 
 ### Deliberate decisions (don't "fix")
 - Whole-widget tap opens the app. No tap zones, no double-tap-to-like

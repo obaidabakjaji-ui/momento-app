@@ -275,10 +275,9 @@ class _FeedTabState extends State<_FeedTab> with WidgetsBindingObserver {
     Map<String, Room> roomMap,
     Set<String> favorites,
   ) async {
-    if (posts.isEmpty) {
-      await _widget.clearWidget();
-      return;
-    }
+    // Empty list flows through updateWidgetWithPosts too — it clears the
+    // widget only when it isn't already cleared (persisted-signature
+    // check), so repeated empty feed emissions don't spam the launcher.
     final widgetPosts = posts.take(20).map((p) {
       return WidgetPost(
         imageUrl: p.imageUrl,

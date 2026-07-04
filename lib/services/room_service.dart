@@ -349,8 +349,7 @@ class RoomService {
     final roomMap = {for (final r in rooms) r.id: r};
 
     final now = DateTime.now();
-    // TESTING ONLY — revert to Duration(hours: 6) before shipping!
-    final expires = now.add(const Duration(seconds: 30));
+    final expires = now.add(const Duration(hours: 6));
     final batch = _db.batch();
     var live = 0;
     var pending = 0;

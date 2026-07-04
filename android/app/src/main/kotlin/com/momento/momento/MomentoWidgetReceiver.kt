@@ -1,7 +1,9 @@
 package com.momento.momento
 
+import android.app.AlarmManager
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
@@ -34,15 +36,27 @@ class MomentoWidgetReceiver : HomeWidgetProvider() {
 
     companion object {
         const val TAG = "HuddlexWidget"
-        // Bumped from "last_data_hash" — earlier builds cached a "success"
-        // hash for renders that were actually silently rejected by the
-        // launcher (binder bundle too large). The dedup then refused to
-        // re-render with identical content even after the bitmap fix was
-        // shipped. A new key resets the cache without needing the user to
-        // clear app data. _v3 bump pairs with the static-single-card
-        // layout switch so the new structure picks up immediately on next
-        // push even when the underlying post data hasn't changed.
-        const val PREF_LAST_DATA_HASH = "last_data_hash_v5"
+        // Versioned so shipping a render-affecting change can invalidate the
+        // cached hash without users clearing app data (a stale "success"
+        // hash once masked silently-rejected renders for weeks). _v6 pairs
+        // with the switch to hashing the ACTIVE post subset.
+        const val PREF_LAST_DATA_HASH = "last_data_hash_v6"
+
+        // Post lifetime — must match `Duration(hours: 6)` in
+        // lib/services/room_service.dart.
+        const val POST_LIFETIME_MS = 6L * 60L * 60L * 1000L
+
+        // Self-scheduled one-shot alarm that fires when the oldest rendered
+        // post crosses its 6h expiry, so expired photos leave the widget
+        // without needing the app to be opened. Inexact + non-waking (RTC):
+        // if the device is dozing, the tick lands when it next wakes —
+        // exactly when the user could actually see the widget.
+        const val ACTION_EXPIRY_TICK = "com.momento.momento.ACTION_EXPIRY_TICK"
+        const val EXPIRY_ALARM_REQUEST_CODE = 9001
+        // Small buffer past the theoretical expiry instant so clock skew
+        // can't make the tick land a hair early and re-render a still-
+        // active set (which would reschedule a zero-delay alarm loop).
+        const val EXPIRY_TICK_BUFFER_MS = 5_000L
 
         // home_widget plugin's SharedPreferences (see home_widget-0.9.0/
         // .../HomeWidgetPlugin.kt constant PREFERENCES).
@@ -68,45 +82,116 @@ class MomentoWidgetReceiver : HomeWidgetProvider() {
         const val MAX_CARDS = 5
     }
 
+    override fun onReceive(context: Context, intent: Intent) {
+        super.onReceive(context, intent)
+        if (intent.action == ACTION_EXPIRY_TICK) {
+            Log.d(TAG, "onReceive: expiry tick")
+            val mgr = AppWidgetManager.getInstance(context)
+            val ids = mgr.getAppWidgetIds(
+                ComponentName(context, MomentoWidgetReceiver::class.java)
+            )
+            if (ids.isEmpty()) return
+            val widgetData =
+                context.getSharedPreferences(WIDGET_DATA_PREFS, Context.MODE_PRIVATE)
+            // Same path as a data push. The hash is computed over the
+            // ACTIVE (unexpired) subset, so posts crossing expiry since the
+            // last render change the hash and the rebuild happens; a
+            // spurious tick with nothing newly expired dedups to a no-op.
+            onUpdate(context, mgr, ids, widgetData)
+        }
+    }
+
     override fun onUpdate(
         context: Context,
         appWidgetManager: AppWidgetManager,
         appWidgetIds: IntArray,
         widgetData: SharedPreferences
     ) {
+        val arrays = readArrays(widgetData)
+        val activeIndices = computeActiveIndicesFromArrays(arrays)
+
+        // (Re-)arm the expiry alarm on EVERY update, even deduped ones:
+        // alarms don't survive reboot or app force-stop, and the system
+        // delivers APPWIDGET_UPDATE after both — this puts the alarm back
+        // without requiring the data to have changed.
+        scheduleNextExpiryTick(context, arrays, activeIndices)
+
         val indexPrefs = context.getSharedPreferences(INDEX_PREFS, Context.MODE_PRIVATE)
-        val newHash = dataHash(widgetData)
+        val newHash = dataHash(arrays, activeIndices)
         val lastHash = indexPrefs.getInt(PREF_LAST_DATA_HASH, Int.MIN_VALUE)
         if (newHash == lastHash) {
-            Log.d(TAG, "onUpdate: data unchanged (hash=$newHash), skipping rebuild")
+            Log.d(TAG, "onUpdate: active set unchanged (hash=$newHash), skipping rebuild")
             return
         }
         indexPrefs.edit().putInt(PREF_LAST_DATA_HASH, newHash).apply()
-        renderAllPhotos(context, appWidgetManager, appWidgetIds, widgetData)
+        renderAllPhotos(context, appWidgetManager, appWidgetIds, arrays, activeIndices)
     }
 
-    private fun dataHash(widgetData: SharedPreferences): Int {
-        val paths = widgetData.getString("momento_image_paths", "[]") ?: "[]"
-        val createdAts = widgetData.getString("momento_created_ats", "[]") ?: "[]"
-        // Include postIds so older builds (without post-id arrays) and
-        // newer ones produce different hashes — the tap wiring depends on
-        // these arrays being present, so we want a forced re-render the
-        // first time they appear in prefs.
-        val postIds = widgetData.getString("momento_post_ids", "[]") ?: "[]"
-        var h = paths.hashCode()
-        h = h * 31 + createdAts.hashCode()
-        h = h * 31 + postIds.hashCode()
+    /**
+     * Content fingerprint of what would actually be RENDERED — the active
+     * (unexpired) subset only. A post crossing its expiry shrinks the
+     * subset and changes the hash even though the stored prefs are
+     * byte-identical; that's what lets the expiry tick reuse the ordinary
+     * dedup'd update path.
+     */
+    private fun dataHash(arrays: Arrays, activeIndices: List<Int>): Int {
+        var h = activeIndices.size
+        for (i in activeIndices) {
+            h = h * 31 + arrays.paths.optStringSafe(i).hashCode()
+            h = h * 31 + arrays.createdAts.optLongAt(i).hashCode()
+        }
         return h
+    }
+
+    /**
+     * Arm a one-shot inexact alarm for the earliest upcoming post expiry
+     * (+buffer), or cancel it when nothing on the widget can expire.
+     * FLAG_UPDATE_CURRENT means rescheduling just moves the single pending
+     * alarm — there is never more than one outstanding tick.
+     */
+    private fun scheduleNextExpiryTick(
+        context: Context,
+        arrays: Arrays,
+        activeIndices: List<Int>,
+    ) {
+        val alarmManager =
+            context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
+        val intent = Intent(context, MomentoWidgetReceiver::class.java).apply {
+            action = ACTION_EXPIRY_TICK
+        }
+        val pending = PendingIntent.getBroadcast(
+            context, EXPIRY_ALARM_REQUEST_CODE, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+
+        // Legacy rows without a createdAt (<= 0) never expire — skip them.
+        val earliestCreatedAt = activeIndices
+            .map { arrays.createdAts.optLongAt(it) }
+            .filter { it > 0 }
+            .minOrNull()
+        if (earliestCreatedAt == null) {
+            alarmManager.cancel(pending)
+            return
+        }
+
+        val triggerAt = earliestCreatedAt + POST_LIFETIME_MS + EXPIRY_TICK_BUFFER_MS
+        // Already past due (e.g. update delivered late): fire the tick just
+        // ahead of now rather than in the past to avoid an immediate-loop.
+        val safeTriggerAt = maxOf(triggerAt, System.currentTimeMillis() + EXPIRY_TICK_BUFFER_MS)
+        // RTC (non-waking) + AllowWhileIdle: fires through doze maintenance
+        // windows, never wakes the screen just to update a widget nobody is
+        // looking at.
+        alarmManager.setAndAllowWhileIdle(AlarmManager.RTC, safeTriggerAt, pending)
+        Log.d(TAG, "scheduleNextExpiryTick: armed for $safeTriggerAt")
     }
 
     private fun renderAllPhotos(
         context: Context,
         appWidgetManager: AppWidgetManager,
         appWidgetIds: IntArray,
-        widgetData: SharedPreferences,
+        arrays: Arrays,
+        activeIndices: List<Int>,
     ) {
-        val arrays = readArrays(widgetData)
-        val activeIndices = computeActiveIndicesFromArrays(arrays)
         val count = activeIndices.size
 
         appWidgetIds.forEach { widgetId ->
@@ -301,13 +386,11 @@ class MomentoWidgetReceiver : HomeWidgetProvider() {
     )
 
     private fun computeActiveIndicesFromArrays(arrays: Arrays): List<Int> {
-        // TESTING ONLY — revert to 6L * 60L * 60L * 1000L before shipping!
-        val postLifetimeMs = 30L * 1000L
         val nowMs = System.currentTimeMillis()
         val active = mutableListOf<Int>()
         for (i in 0 until arrays.paths.length()) {
             val createdAtMs = arrays.createdAts.optLongAt(i)
-            if (createdAtMs <= 0 || nowMs - createdAtMs < postLifetimeMs) {
+            if (createdAtMs <= 0 || nowMs - createdAtMs < POST_LIFETIME_MS) {
                 active.add(i)
             }
         }

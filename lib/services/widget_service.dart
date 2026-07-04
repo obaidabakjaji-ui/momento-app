@@ -46,16 +46,36 @@ class WidgetPost {
 }
 
 class WidgetService {
-  // De-dup state shared across instances. The launcher visibly flickers
-  // every time we touch the widget — even if the receiver dedups on its
-  // side. Catching identical pushes here is cheaper and silent.
-  static String _lastSignature = '';
+  // Refresh serialisation state. Per-isolate (statics don't cross isolate
+  // boundaries) — that's fine for the throttle, which only needs to stop
+  // same-isolate stampedes. Content dedup does NOT live here: the push
+  // signature is persisted via HomeWidget storage (see [_kSignatureKey])
+  // precisely because the workmanager job runs in a fresh isolate every
+  // time, where any in-memory cache would always be empty. An in-memory
+  // signature caused two real bugs: the background job re-downloaded every
+  // widget image on every run, and — worse — when all posts had expired it
+  // skipped clearing the widget, leaving expired photos up indefinitely.
   static DateTime _lastRefreshAt = DateTime.fromMillisecondsSinceEpoch(0);
   static bool _refreshInFlight = false;
   static const _refreshThrottle = Duration(seconds: 5);
 
+  /// Persisted fingerprint of the last successfully pushed post set.
+  static const _kSignatureKey = 'momento_signature';
+
   Future<void> initialize() async {
     await HomeWidget.setAppGroupId(_appGroupId);
+  }
+
+  Future<String> _readPersistedSignature() async {
+    try {
+      return await HomeWidget.getWidgetData<String>(_kSignatureKey) ?? '';
+    } catch (_) {
+      return '';
+    }
+  }
+
+  Future<void> _persistSignature(String signature) async {
+    await HomeWidget.saveWidgetData(_kSignatureKey, signature);
   }
 
   /// Pull the user's freshest visible posts straight from Firestore and
@@ -194,9 +214,13 @@ class WidgetService {
   /// [isFavoriteRoom] lets the native widget render a star/highlight.
   /// Items should be passed in display order (favorites already bubbled to front).
   Future<void> updateWidgetWithPosts(List<WidgetPost> posts) async {
+    // The persisted signature (not an in-memory static) is the dedup
+    // source of truth so it survives into the fresh isolate each
+    // workmanager run gets. See the note on the class statics.
+    final lastSignature = await _readPersistedSignature();
+
     if (posts.isEmpty) {
-      if (_lastSignature.isEmpty) return;
-      _lastSignature = '';
+      if (lastSignature.isEmpty) return; // already cleared
       await clearWidget();
       return;
     }
@@ -207,7 +231,7 @@ class WidgetService {
     // visible changes (new post, deletion, re-sort).
     final signature =
         posts.map((p) => '${p.imageUrl}|${p.createdAtMs}').join(';');
-    if (signature == _lastSignature) {
+    if (signature == lastSignature) {
       debugPrint('WidgetService: signature unchanged, skipping push');
       return;
     }
@@ -242,9 +266,8 @@ class WidgetService {
 
     if (paths.isEmpty) {
       // Every download failed (e.g. cold Storage token right after a fresh
-      // install). Reset the cached signature so the very next refresh
-      // retries instead of treating this empty result as "done".
-      _lastSignature = '';
+      // install). clearWidget resets the persisted signature so the very
+      // next refresh retries instead of treating this result as "done".
       await clearWidget();
       return;
     }
@@ -268,14 +291,14 @@ class WidgetService {
       DateTime.now().millisecondsSinceEpoch.toString(),
     );
 
-    // Only cache the signature if EVERY intended post actually downloaded.
-    // If some failed, paths.length < posts.length — caching the full
-    // signature here would make the next identical refresh dedup-skip and
-    // the missing photos would never appear until the post list changed
-    // (the "doesn't show until the 3rd photo" bug). Leaving the signature
-    // stale forces the next refresh to retry the failed downloads.
+    // Only persist the signature if EVERY intended post actually
+    // downloaded. If some failed, paths.length < posts.length — persisting
+    // the full signature would make the next identical refresh dedup-skip
+    // and the missing photos would never appear until the post list changed
+    // (the "doesn't show until the 3rd photo" bug). Persisting '' forces
+    // the next refresh to retry the failed downloads.
     final allSucceeded = paths.length == posts.length;
-    _lastSignature = allSucceeded ? signature : '';
+    await _persistSignature(allSucceeded ? signature : '');
     if (!allSucceeded) {
       debugPrint('WidgetService: ${posts.length - paths.length} of '
           '${posts.length} downloads failed — will retry next refresh');
@@ -287,7 +310,7 @@ class WidgetService {
   }
 
   Future<void> clearWidget() async {
-    _lastSignature = '';
+    await _persistSignature('');
     await HomeWidget.saveWidgetData('momento_image_paths', '[]');
     await HomeWidget.saveWidgetData('momento_senders', '[]');
     await HomeWidget.saveWidgetData('momento_rooms', '[]');
