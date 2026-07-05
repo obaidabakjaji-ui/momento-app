@@ -92,4 +92,11 @@ dependencies {
     // Background widget refresh (Phase 7) — native WorkManager, no Flutter
     // engine spin-up.
     implementation("androidx.work:work-runtime-ktx:2.10.0")
+
+    // Location lock (geolocator replacement) — foreground-only fixes.
+    implementation("com.google.android.gms:play-services-location:21.3.0")
+
+    // JVM unit tests (contract truth tables: geofence/approval, streak dayKey).
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
 }

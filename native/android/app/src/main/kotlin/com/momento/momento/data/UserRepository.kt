@@ -1,6 +1,7 @@
 package com.momento.momento.data
 
 import android.util.Log
+import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FirebaseFirestore
 import com.momento.momento.data.model.AppUser
 import kotlinx.coroutines.channels.awaitClose
@@ -38,5 +39,21 @@ object UserRepository {
     suspend fun getUser(uid: String): AppUser? {
         val doc = db.collection("users").document(uid).get().await()
         return AppUser.fromSnapshot(doc)
+    }
+
+    // Batch lookup by uid (liked-by sheet, member lists). Firestore `whereIn`
+    // is limited to 30 ids per query, so the list is chunked exactly like the
+    // Dart firestore_service. Ids that don't resolve to a doc are skipped.
+    suspend fun getUsers(uids: List<String>): List<AppUser> {
+        if (uids.isEmpty()) return emptyList()
+        val results = mutableListOf<AppUser>()
+        for (chunk in uids.chunked(30)) {
+            val query = db.collection("users")
+                .whereIn(FieldPath.documentId(), chunk)
+                .get()
+                .await()
+            results += query.documents.mapNotNull { AppUser.fromSnapshot(it) }
+        }
+        return results
     }
 }
