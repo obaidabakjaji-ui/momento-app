@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Strings introduced by the shared UI components (ui/components/) that have
+     no equivalent in the ARB-generated strings.xml. Kept in a separate file so
+     parallel migration agents never edit the same resource file; Android
+     merges every res/values/*.xml at build time. -->
+<resources>
+    <!-- PhotoViewer: accessibility label for the white close button. -->
+    <string name="component_close">Close</string>
+</resources>

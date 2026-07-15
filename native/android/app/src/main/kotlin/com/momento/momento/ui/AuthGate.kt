@@ -14,6 +14,7 @@ import com.momento.momento.data.AuthUserSnapshot
 import com.momento.momento.data.UserRepository
 import com.momento.momento.ui.auth.AuthScreen
 import com.momento.momento.ui.auth.VerifyEmailScreen
+import com.momento.momento.ui.home.HomeScreen
 
 /**
  * Distinguishes "auth state not known yet" from "signed out" (null). Compared
@@ -31,14 +32,13 @@ private val LoadingSentinel = AuthUserSnapshot(
  * Routing mirror of the Flutter `AuthGate` (lib/main.dart):
  * spinner (pre-first-emission) → [AuthScreen] (signed out) →
  * [VerifyEmailScreen] (!emailVerified — Google accounts arrive verified and
- * skip it) → spinner while the user doc is null → onboarding → home.
+ * skip it) → spinner while the user doc is null → onboarding → [HomeScreen].
  *
- * Onboarding/Home are later phases, so they're injected as slots.
+ * Onboarding is a later phase (6), so it's still injected as a slot.
  */
 @Composable
 fun AuthGate(
     onboarding: @Composable () -> Unit,
-    home: @Composable () -> Unit,
 ) {
     // authFlow is userChanges-semantics (B1): it re-emits after
     // reloadCurrentUser(), which is what routes away from the verify screen
@@ -52,7 +52,7 @@ fun AuthGate(
         // Keyed on uid so a second unverified account in the same Activity
         // gets a fresh ViewModel (fresh auto-sent code, no stale state).
         !snap.emailVerified -> VerifyEmailScreen(uid = snap.uid)
-        else -> VerifiedGate(uid = snap.uid, onboarding = onboarding, home = home)
+        else -> VerifiedGate(uid = snap.uid, onboarding = onboarding)
     }
 }
 
@@ -60,7 +60,6 @@ fun AuthGate(
 private fun VerifiedGate(
     uid: String,
     onboarding: @Composable () -> Unit,
-    home: @Composable () -> Unit,
 ) {
     // Keyed on uid so signing out and back in with a different account
     // re-subscribes to the right doc.
@@ -73,7 +72,7 @@ private fun VerifiedGate(
         // flash onboarding.
         appUser == null -> LoadingScreen()
         !appUser.hasSeenOnboarding -> onboarding()
-        else -> home()
+        else -> HomeScreen(uid = uid)
     }
 }
 

@@ -23,11 +23,10 @@ class MainActivity : ComponentActivity() {
         setContent {
             HuddlexTheme {
                 // AuthGate mirrors the Flutter routing: auth → verify →
-                // onboarding → home. Onboarding (Phase 6) and Home (Phase 3)
-                // are placeholders until their phases land.
+                // onboarding → home. Home is the real HomeScreen (Phase 3);
+                // onboarding stays a placeholder until Phase 6 lands.
                 AuthGate(
                     onboarding = { PlaceholderScreen("Onboarding — coming in Phase 6") },
-                    home = { PlaceholderScreen("Home — coming in Phase 3") },
                 )
             }
         }

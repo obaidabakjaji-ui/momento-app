@@ -613,6 +613,13 @@ object RoomRepository {
      * Watch the latest non-expired posts from a single room. Expired and
      * still-pending posts are filtered CLIENT-SIDE — exactly like the Dart
      * feed — so we don't need a composite Firestore index (B4).
+     *
+     * Listener errors CLOSE the flow with the error — mirroring the Dart
+     * watchRoomPosts stream, whose onError is forwarded by _combineLatest to
+     * the StreamBuilder (home_screen.dart). Do NOT fold errors to an empty
+     * list: that would render as the Empty state and, once the Phase 7 widget
+     * push hook lands, would wrongly clear the widget. FeedViewModel catches
+     * the failure and routes it to FeedUiState.Error.
      */
     fun watchRoomPosts(roomId: String, limit: Int = 50): Flow<List<RoomPost>> = callbackFlow {
         val registration = rooms.document(roomId)
@@ -622,7 +629,7 @@ object RoomRepository {
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     Log.w(TAG, "rooms/$roomId posts listener error", error)
-                    trySend(emptyList())
+                    close(error)
                     return@addSnapshotListener
                 }
                 trySend(
