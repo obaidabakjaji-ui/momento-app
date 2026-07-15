@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- NEW keys for RoomSettingsScreen / PendingPostsScreen (Phase 5b) that have
+     no equivalent in the ARB-generated strings.xml. Kept in a separate file so
+     parallel migration agents never edit the same resource file; Android
+     merges every res/values/*.xml at build time. -->
+<resources>
+    <!-- Dart hardcoded 'Save failed: $e' (room_settings_screen.dart) — it was
+         never in the ARBs, so it gets a proper key here. -->
+    <string name="room_settings_save_failed">Save failed: %1$s</string>
+    <!-- Accessibility labels (Flutter got these for free from semantics). -->
+    <string name="room_settings_back">Back</string>
+    <string name="room_settings_change_photo">Change community photo</string>
+    <string name="room_settings_member_options">Member options</string>
+    <string name="room_settings_approve_request">Approve request</string>
+    <string name="room_settings_deny_request">Deny request</string>
+</resources>

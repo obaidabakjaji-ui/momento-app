@@ -26,7 +26,20 @@
             </intent-filter>
         </activity>
 
-        <!-- Home-screen widget receiver gets ported (nearly verbatim — it is
-             already Kotlin) in Phase 7. -->
+        <!-- Momento home screen widget (Phase 7) — mirrors the Flutter
+             manifest's declaration; only the class package differs
+             (.widget.MomentoWidgetReceiver). Exported so the launcher and
+             the receiver's own self-armed expiry alarm can deliver
+             APPWIDGET_UPDATE / ACTION_EXPIRY_TICK broadcasts. -->
+        <receiver
+            android:name=".widget.MomentoWidgetReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/momento_widget_info" />
+        </receiver>
     </application>
 </manifest>

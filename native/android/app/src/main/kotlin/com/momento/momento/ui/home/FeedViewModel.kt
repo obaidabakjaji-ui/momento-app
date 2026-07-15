@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.momento.momento.HuddlexApp
 import com.momento.momento.R
 import com.momento.momento.data.ModerationRepository
 import com.momento.momento.data.RoomRepository
@@ -11,6 +12,8 @@ import com.momento.momento.data.UserRepository
 import com.momento.momento.data.model.AppUser
 import com.momento.momento.data.model.Room
 import com.momento.momento.data.model.RoomPost
+import com.momento.momento.widget.WidgetPost
+import com.momento.momento.widget.WidgetUpdater
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay

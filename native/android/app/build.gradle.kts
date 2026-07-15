@@ -86,6 +86,18 @@ dependencies {
     // Images
     implementation("io.coil-kt:coil-compose:2.7.0")
 
+    // Camera capture (Phase 4) — CameraX replaces the Flutter camera plugin.
+    implementation("androidx.camera:camera-camera2:1.4.1")
+    implementation("androidx.camera:camera-lifecycle:1.4.1")
+    implementation("androidx.camera:camera-view:1.4.1")
+    // EXIF-honoring rotation before the square crop (B13 crop contract).
+    implementation("androidx.exifinterface:exifinterface:1.3.7")
+
+    // Widget image downloads (Phase 7).
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    // App-resume hook for the non-forced widget refresh (B8).
+    implementation("androidx.lifecycle:lifecycle-process:2.8.7")
+
     // Coroutines interop for Play Services Tasks (await()).
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.9.0")
 

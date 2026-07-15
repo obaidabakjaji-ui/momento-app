@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Widget-owned strings (Phase 7). Referenced by xml/momento_widget_info.xml.
+     Same key + value as the Flutter android res so the appwidget picker copy
+     is unchanged across the update-in-place. -->
+<resources>
+    <string name="widget_description">See the latest huddles from your communities</string>
+</resources>
